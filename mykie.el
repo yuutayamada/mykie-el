@@ -265,7 +265,7 @@ You can use `mykie:region-str' variable that have region's string."
                ((or (and C-u&bolp (bolp))
                     (and C-u&eolp (eolp)))
                 (mykie:execute-from-functions nil C-u&bolp C-u&eolp))
-               (t 
+               (t
                 (mykie:execute-by-type
                  default thing-type
                  C-u&string C-u&string&bolp C-u&string&eolp
