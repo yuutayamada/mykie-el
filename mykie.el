@@ -220,12 +220,12 @@ Example
   mykie:C-u-num)
 
 (defun* mykie (&key
-              default default&bolp default&eolp
-              C-u C-u&bolp C-u&eolp
-              C-u&string C-u&string&bolp C-u&string&eolp
-              C-u&number C-u&number&bolp C-u&number&eolp
-              region region-handle-flag region&C-u
-              repeat thing-type use-C-u-num deactivate-region)
+               default default&bolp default&eolp
+               C-u C-u&bolp C-u&eolp
+               C-u&string C-u&string&bolp C-u&string&eolp
+               C-u&number C-u&number&bolp C-u&number&eolp
+               region region-handle-flag region&C-u
+               repeat thing-type use-C-u-num deactivate-region)
   "Call function you are set functions.
 You can set below keyword:
 *Functions*
