@@ -202,11 +202,11 @@ Example
   (setq mykie:region-str (buffer-substring (region-beginning) (region-end)))
   (when region-handle-flag
     (mykie:kill-or-copy-region region-handle-flag))
-  (if (and region&C-u C-u)
-      (mykie:execute region&C-u)
-    (if region
-        (mykie:execute region)
-      (mykie:execute default)))
+  (cond ((and region&C-u C-u)
+         (mykie:execute region&C-u))
+        (region
+         (mykie:execute region))
+        (t (mykie:execute default)))
   (when (and deactivate-region
              (or region region&C-u))
     (deactivate-mark)))
@@ -255,15 +255,16 @@ You can use `mykie:region-str' variable that have region's string."
         (:default      ; not pushed C-u
          (mykie:default default default&bolp default&eolp repeat))
         (:C-u-list-num ; pushed C-u
-         (if C-u
-             (mykie:execute C-u)
-           (if (or (and C-u&bolp (bolp))
-                   (and C-u&eolp (eolp)))
-               (mykie:execute-from-functions nil C-u&bolp C-u&eolp)
-             (mykie:execute-by-type
-              default thing-type
-              C-u&string C-u&string&bolp C-u&string&eolp
-              C-u&number C-u&number&bolp C-u&number&eolp))))
+         (cond (C-u
+                (mykie:execute C-u))
+               ((or (and C-u&bolp (bolp))
+                    (and C-u&eolp (eolp)))
+                (mykie:execute-from-functions nil C-u&bolp C-u&eolp))
+               (t 
+                (mykie:execute-by-type
+                 default thing-type
+                 C-u&string C-u&string&bolp C-u&string&eolp
+                 C-u&number C-u&number&bolp C-u&number&eolp))))
         (:C-u-num ; if set t to use-C-u-num
          (when C-u (mykie:execute C-u))))))
   (unless (mykie:repeat-p)
