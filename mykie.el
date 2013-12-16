@@ -90,7 +90,7 @@
 (defun mykie:kill-or-copy-region (&optional copy-or-kill)
   (case copy-or-kill
     (kill (kill-region         (region-beginning) (region-end)))
-    (t    (copy-region-as-kill (region-beginning) (region-end)))))
+    (copy (copy-region-as-kill (region-beginning) (region-end)))))
 
 (defun mykie:replace-string (word)
   (let* ((separator
