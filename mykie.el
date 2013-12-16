@@ -184,14 +184,6 @@ Example
       C-u&number&bolp C-u&number&eolp
       :default default))))
 
-(defun mykie:execute-by-pushed-times (func-list)
-  (loop with num = (truncate (log (or (car current-prefix-arg) 1) 4))
-        for i from 0 to (length func-list)
-        if (and (equal num 0))
-        do (error "This function have to call when :C-u-only")
-        else if (and (equal num i))
-        do (mykie:execute (nth (1- num) func-list))))
-
 (defun mykie:default (default default&bolp default&eolp repeat)
   (if (and repeat (mykie:repeat-p))
       (mykie:execute repeat)
