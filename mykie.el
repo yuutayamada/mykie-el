@@ -207,10 +207,13 @@ Example
         (region
          (mykie:execute region))
         (t (mykie:execute default)))
-  (when (and deactivate-region
-             (or region region&C-u))
-    (deactivate-mark)))
+  (mykie:deactivate-region-maybe C-u deactivate-region  region region&C-u))
 
+(defun mykie:deactivate-region-maybe (C-u deactivate-region region region&C-u)
+  (when (or (and (eq deactivate-region 'region) (not C-u) region)
+            (and (eq deactivate-region 'region&C-u) C-u region&C-u)
+            (and (eq deactivate-region t) (or region region&C-u)))
+    (deactivate-mark)))
 
 (defun mykie:convert-to-number (prefix-arg)
   (setq mykie:C-u-num (truncate (log (or (car prefix-arg) 1) 4)))
@@ -243,7 +246,9 @@ prefix-argument).
 If you set 'kill then region's string is killed.
 If you set 'copy then region's string is copied.
 :deactivate-region - deactivate region after region command execution
-
+If you set 'region then deactivate region when you did not push C-u.
+If you set 'region&C-u then deactivate region when you pushed C-u.
+If you set t then deactivate region in both cases.
 You can use `mykie:region-str' variable that have region's string."
   (interactive)
   (lexical-let*
