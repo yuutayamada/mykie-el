@@ -37,6 +37,7 @@
 (eval-when-compile (require 'cl))
 (require 'thingatpt)
 
+;; CUSTOMIZE VARIABLE
 (defvar mykie:conditions
   '((when (region-active-p)
       (or (and current-prefix-arg
@@ -62,15 +63,9 @@ Note: Order is important. Above list element have more priority than
 below elements. If you dislike :repeat's priority, then you can change
 this behavior by this variable.")
 
-(defvar mykie:current-args '())
 (defvar mykie:region-before-init-hook '(mykie:region-init))
 (defvar mykie:region-after-init-hook  '(mykie:deactivate-mark))
 
-(defvar mykie:condition-list
-  `((c-mode    ("<"  . ".h>"))
-    (jade-mode ("#{" . "}"))
-    (html-mode ("<"  . ">"))
-    (t         ("\"" . "\""))))
 (defvar mykie:region-func-predicate
   '(lambda ()
      (and (region-active-p)
@@ -79,11 +74,20 @@ this behavior by this variable.")
 (defvar mykie:url
   "https://www.google.com/search?newwindow=1&q=")
 
+;; DYNAMIC VARIABLES
 (defvar mykie:current-funcname nil)
+(defvar mykie:current-args '())
 (defvar mykie:current-point "")
-(defvar mykie:region-str "")
 (defvar mykie:current-thing nil)
+(defvar mykie:region-str "")
 (defvar mykie:C-u-num nil)
+
+;; TODO improve something
+(defvar mykie:condition-list
+  `((c-mode    ("<"  . ".h>"))
+    (jade-mode ("#{" . "}"))
+    (html-mode ("<"  . ">"))
+    (t         ("\"" . "\""))))
 
 (defun mykie:browse-url ()
   (browse-url
