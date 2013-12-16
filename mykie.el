@@ -199,9 +199,9 @@ Example
      default default&bolp default&eolp)))
 
 (defun mykie:region (C-u region-handle-flag region region&C-u default)
+  (setq mykie:region-str (buffer-substring (region-beginning) (region-end)))
   (when region-handle-flag
-    (mykie:kill-or-copy-region region-handle-flag)
-    (setq mykie:region-str (car kill-ring)))
+    (mykie:kill-or-copy-region region-handle-flag))
   (if (and region&C-u C-u)
       (mykie:execute region&C-u)
     (if region
@@ -235,10 +235,11 @@ You can set below keyword:
 :use-C-u-num - if you set non-nil to this, then you can use
 `mykie:C-u-num' variable that have number of C-u's pushed times(i.e.,
 prefix-argument).
-:region-handle-flag - you can set 'copy and 'kill, then you can use
-`mykie:region-str' variable that have region's string.
+:region-handle-flag - you can set 'copy and 'kill
 If you set 'kill then region's string is killed.
-If you set 'copy then region's string is copied."
+If you set 'copy then region's string is copied.
+
+You can use `mykie:region-str' variable that have region's string."
   (interactive)
   (lexical-let*
       ((mykie:arg current-prefix-arg)
