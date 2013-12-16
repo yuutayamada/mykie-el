@@ -198,7 +198,7 @@ Example
     (mykie:execute-from-functions
      default default&bolp default&eolp)))
 
-(defun mykie:region (C-u region-handle-flag region region&C-u default)
+(defun mykie:region (C-u region-handle-flag region region&C-u default deactivate-region)
   (setq mykie:region-str (buffer-substring (region-beginning) (region-end)))
   (when region-handle-flag
     (mykie:kill-or-copy-region region-handle-flag))
@@ -206,7 +206,11 @@ Example
       (mykie:execute region&C-u)
     (if region
         (mykie:execute region)
-      (mykie:execute default))))
+      (mykie:execute default)))
+  (when (and deactivate-region
+             (or region region&C-u))
+    (deactivate-mark)))
+
 
 (defun mykie:convert-to-number (prefix-arg)
   (setq mykie:C-u-num (truncate (log (or (car prefix-arg) 1) 4)))
@@ -218,7 +222,7 @@ Example
               C-u&string C-u&string&bolp C-u&string&eolp
               C-u&number C-u&number&bolp C-u&number&eolp
               region region-handle-flag region&C-u
-              repeat thing-type use-C-u-num)
+              repeat thing-type use-C-u-num deactivate-region)
   "Call function you are set functions.
 You can set below keyword:
 *Functions*
@@ -238,6 +242,7 @@ prefix-argument).
 :region-handle-flag - you can set 'copy and 'kill
 If you set 'kill then region's string is killed.
 If you set 'copy then region's string is copied.
+:deactivate-region - deactivate region after region command execution
 
 You can use `mykie:region-str' variable that have region's string."
   (interactive)
@@ -245,7 +250,7 @@ You can use `mykie:region-str' variable that have region's string."
       ((mykie:arg current-prefix-arg)
        (mykie:C-u-state (mykie:get-C-u-state mykie:arg use-C-u-num default)))
     (if (region-active-p) ; For region
-        (mykie:region mykie:arg region-handle-flag region region&C-u default)
+        (mykie:region mykie:arg region-handle-flag region region&C-u default deactivate-region)
       (case mykie:C-u-state
         (:default      ; not pushed C-u
          (mykie:default default default&bolp default&eolp repeat))
