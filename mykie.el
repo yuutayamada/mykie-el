@@ -141,7 +141,7 @@
   "Execute FUNC.
 You can specify like following forms to the FUNC:
 Example
- (mykie:loop-command
+ (mykie:loop
   \"j\" (lambda ()
         (newline-and-indent))
   \"m\" 'newline
