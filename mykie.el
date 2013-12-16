@@ -141,7 +141,7 @@
   "Execute FUNC.
 You can specify like following forms to the FUNC:
 Example
- (mykie:loop-command
+ (mykie:loop
   \"j\" (lambda ()
         (newline-and-indent))
   \"m\" 'newline
@@ -198,15 +198,22 @@ Example
     (mykie:execute-from-functions
      default default&bolp default&eolp)))
 
-(defun mykie:region (C-u region-handle-flag region region&C-u default)
+(defun mykie:region (C-u region-handle-flag region region&C-u default deactivate-region)
+  (setq mykie:region-str (buffer-substring (region-beginning) (region-end)))
   (when region-handle-flag
-    (mykie:kill-or-copy-region region-handle-flag)
-    (setq mykie:region-str (car kill-ring)))
-  (if (and region&C-u C-u)
-      (mykie:execute region&C-u)
-    (if region
-        (mykie:execute region)
-      (mykie:execute default))))
+    (mykie:kill-or-copy-region region-handle-flag))
+  (cond ((and region&C-u C-u)
+         (mykie:execute region&C-u))
+        (region
+         (mykie:execute region))
+        (t (mykie:execute default)))
+  (mykie:deactivate-region-maybe C-u deactivate-region  region region&C-u))
+
+(defun mykie:deactivate-region-maybe (C-u deactivate-region region region&C-u)
+  (when (or (and (eq deactivate-region 'region) (not C-u) region)
+            (and (eq deactivate-region 'region&C-u) C-u region&C-u)
+            (and (eq deactivate-region t) (or region region&C-u)))
+    (deactivate-mark)))
 
 (defun mykie:convert-to-number (prefix-arg)
   (setq mykie:C-u-num (truncate (log (or (car prefix-arg) 1) 4)))
@@ -218,7 +225,7 @@ Example
               C-u&string C-u&string&bolp C-u&string&eolp
               C-u&number C-u&number&bolp C-u&number&eolp
               region region-handle-flag region&C-u
-              repeat thing-type use-C-u-num)
+              repeat thing-type use-C-u-num deactivate-region)
   "Call function you are set functions.
 You can set below keyword:
 *Functions*
@@ -235,29 +242,34 @@ You can set below keyword:
 :use-C-u-num - if you set non-nil to this, then you can use
 `mykie:C-u-num' variable that have number of C-u's pushed times(i.e.,
 prefix-argument).
-:region-handle-flag - you can set 'copy and 'kill, then you can use
-`mykie:region-str' variable that have region's string.
+:region-handle-flag - you can set 'copy and 'kill
 If you set 'kill then region's string is killed.
-If you set 'copy then region's string is copied."
+If you set 'copy then region's string is copied.
+:deactivate-region - deactivate region after region command execution
+If you set 'region then deactivate region when you did not push C-u.
+If you set 'region&C-u then deactivate region when you pushed C-u.
+If you set t then deactivate region in both cases.
+You can use `mykie:region-str' variable that have region's string."
   (interactive)
   (lexical-let*
       ((mykie:arg current-prefix-arg)
        (mykie:C-u-state (mykie:get-C-u-state mykie:arg use-C-u-num default)))
     (if (region-active-p) ; For region
-        (mykie:region mykie:arg region-handle-flag region region&C-u default)
+        (mykie:region mykie:arg region-handle-flag region region&C-u default deactivate-region)
       (case mykie:C-u-state
         (:default      ; not pushed C-u
          (mykie:default default default&bolp default&eolp repeat))
         (:C-u-list-num ; pushed C-u
-         (if C-u
-             (mykie:execute C-u)
-           (if (or (and C-u&bolp (bolp))
-                   (and C-u&eolp (eolp)))
-               (mykie:execute-from-functions nil C-u&bolp C-u&eolp)
-             (mykie:execute-by-type
-              default thing-type
-              C-u&string C-u&string&bolp C-u&string&eolp
-              C-u&number C-u&number&bolp C-u&number&eolp))))
+         (cond (C-u
+                (mykie:execute C-u))
+               ((or (and C-u&bolp (bolp))
+                    (and C-u&eolp (eolp)))
+                (mykie:execute-from-functions nil C-u&bolp C-u&eolp))
+               (t 
+                (mykie:execute-by-type
+                 default thing-type
+                 C-u&string C-u&string&bolp C-u&string&eolp
+                 C-u&number C-u&number&bolp C-u&number&eolp))))
         (:C-u-num ; if set t to use-C-u-num
          (when C-u (mykie:execute C-u))))))
   (unless (mykie:repeat-p)
