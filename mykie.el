@@ -69,7 +69,7 @@
 (defun mykie:get-C-u-state (C-u-arg use-C-u-num default)
   (lexical-let
       ((arg (if (and use-C-u-num (or C-u-arg (null default)))
-                (mykie:convert-to-number)
+                (mykie:get-C-u-times)
               C-u-arg)))
     (typecase arg
       (null   :default)
@@ -215,7 +215,7 @@ Example
             (and (eq deactivate-region t) (or region region&C-u)))
     (deactivate-mark)))
 
-(defun mykie:convert-to-number ()
+(defun mykie:get-C-u-times ()
   (setq mykie:C-u-num (truncate (log (or (car current-prefix-arg) 1) 4)))
   mykie:C-u-num)
 
