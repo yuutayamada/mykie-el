@@ -62,6 +62,8 @@ Note: Order is important. Above list element have more priority than
 below elements. If you dislike :repeat's priority, then you can change
 this behavior by this variable.")
 
+(defvar mykie:current-args '())
+
 (defvar mykie:condition-list
   `((c-mode    ("<"  . ".h>"))
     (jade-mode ("#{" . "}"))
@@ -186,7 +188,9 @@ Example
 (defun mykie:init (args)
   (when (plist-get args :use-C-u-num)
     (mykie:get-C-u-times))
-  (setq mykie:current-thing (mykie:get-thing (plist-get args :thing-type))))
+  (setq
+   mykie:current-args  args
+   mykie:current-thing (mykie:get-thing (plist-get args :thing-type))))
 
 (defun mykie:region-init (args keyword)
   (setq mykie:region-str
