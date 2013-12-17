@@ -49,13 +49,16 @@
     (when current-prefix-arg
       (or (and (bolp)        :C-u&bolp)
           (and (eolp)        :C-u&eolp)))
+    (when current-prefix-arg
+      (mykie:thing :C-u))
     (when current-prefix-arg :C-u)
     (when (mykie:repeat-p)   :repeat)
     (when (minibufferp)      :minibuff)
     (when (bobp)             :bobp)
     (when (eobp)             :eobp)
     (when (bolp)             :bolp)
-    (when (eolp)             :eolp))
+    (when (eolp)             :eolp)
+    (mykie:thing))
   "This variable is evaluated in mykie's loop by each the when statement.
 Then if the when statement is match, return value(like :C-u) and then
 same keyword's function that you are specified is evaluated.
@@ -73,6 +76,9 @@ this behavior by this variable.")
 
 (defvar mykie:url
   "https://www.google.com/search?newwindow=1&q=")
+
+;; I don't recommend to set t.
+(defvar mykie:use-develop-version nil)
 
 ;; DYNAMIC VARIABLES
 (defvar mykie:current-funcname nil)
@@ -94,7 +100,7 @@ this behavior by this variable.")
    (concat mykie:url "\"" mykie:region-str "\"")))
 
 (defun mykie:query-x-times (type)
-  (when (equal type :number)
+  (when (equal type 'word&num)
     (string-to-number
      (read-from-minibuffer "Input x times: "))))
 
@@ -135,16 +141,55 @@ this behavior by this variable.")
   (insert (number-to-string number))
   (backward-char))
 
-(defun mykie:get-thing (thing-type)
-  ""
-  (lexical-let* ((type  (or thing-type 'word))
-                 (thing (thing-at-point type)))
-    (case type
-      ('word
-       (when thing
-         (if (< 0 (string-to-number thing))
-             (cons :number (string-to-number thing))
-           (cons :string thing)))))))
+(defun mykie:set-thing (thing-type)
+  "Set `thing-at-point's variable to `mykie:current-thing' variable.
+You can set following types to THING-TYPE:
+`symbol', `list', `sexp', `defun',
+`filename', `url', `email', `word', `sentence', `whitespace',
+`line', `number', and `page'.
+Default value is 'word.
+
+Return value is list pair like '(type thing).
+But if the type is 'word(i.e., by default), then the type is bit different.
+ '(word&num [0-9]+) <- this is modified to point's number.
+or
+ '(word&str \"point's string\")
+It's depending on the point's word.
+If point's word is number then return above form.
+If point's word is otherwise then return below form.
+You can change specified the THING-TYPE by :thing-type keyword.
+For example
+ (mykie :thing-type 'line
+        :default '(print mykie:current-thing))"
+  (setq mykie:current-thing
+        (lexical-let* ((type  (or thing-type 'word))
+                       (thing (thing-at-point type)))
+          (case type
+            ('word (when thing
+                     (if (< 0 (string-to-number thing))
+                         `(word&num (string-to-number ,thing))
+                       `(word&str ,thing))))
+            (t `(,type ,thing))))))
+
+(defun mykie:symbol-concat (prefix suffix &optional sep)
+  "WORK IN PROGRESS"
+  (intern
+   (mapconcat (lambda (arg) (symbol-name arg))
+              `(,prefix ,suffix) (or sep ""))))
+
+(defun mykie:thing (&optional prefix)
+  "WORK IN PROGRESS
+This Return :C-u&word&str or :C-u&word&num if you set same keyword to
+`mykie's argument."
+  (when mykie:use-develop-version
+    (lexical-let
+        ((funcname
+          (if prefix
+              (mykie:symbol-concat prefix (car mykie:current-thing) "&")
+            (mykie:symbol-concat ': (car mykie:current-thing) ""))))
+      (when (member
+             funcname mykie:current-args)
+        funcname))))
 
 (defun mykie:loop (&rest keybinds)
   (lexical-let*
@@ -199,9 +244,8 @@ Example
 (defun mykie:init (args)
   (when (plist-get args :use-C-u-num)
     (mykie:get-C-u-times))
-  (setq
-   mykie:current-args  args
-   mykie:current-thing (mykie:get-thing (plist-get args :thing-type))))
+  (setq mykie:current-args  args)
+  (mykie:set-thing (plist-get args :thing-type)))
 
 (defun mykie:region-init ()
   (setq mykie:region-str
