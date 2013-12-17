@@ -24,9 +24,56 @@ You need to register your keybinds.
                                (org-mode (org-return-indent))
                                (t        (newline-and-indent))))
       :C-u&eolp           '(fill-region (point-at-bol) (point-at-eol))
-      :region-handle-flag 'copy
       :region             'query-replace-regexp)))
 ```
+
+You can change condition's order and condition by `mykie:conditions` variable
+from version 0.0.4. For example:
+
+```lisp
+(setq mykie:conditions
+  '((when (region-active-p)
+      (or (and current-prefix-arg
+               :region&C-u)
+          :region))
+    (when current-prefix-arg
+      (or (and (eobp)        :C-u&eobp)
+          (and (bobp)        :C-u&bobp)))
+    (when current-prefix-arg
+      (or (and (bolp)        :C-u&bolp)
+          (and (eolp)        :C-u&eolp)))
+    (when current-prefix-arg :C-u)
+    ;; -- this is NOT default condition --
+    (case major-mode
+      (org-mode        :org)
+      (emacs-list-mode :emacs))
+    ;; -----------------------------------
+    (when (mykie:repeat-p)   :repeat)
+    (when (minibufferp)      :minibuff)
+    (mykie:thing)
+    (when (bobp)             :bobp)
+    (when (eobp)             :eobp)
+    (when (bolp)             :bolp)
+    (when (eolp)             :eolp)))
+```
+
+Above example is added a condition that compare for majar-mode.
+You can call added function name like:
+
+```lisp
+(global-set-key (kbd "C-0")
+                '(lambda ()
+                   (interactive)
+                   (mykie
+                    :region  '(message "You are selecting region now")
+                    :org     '(message "major-mode is org-mode")
+                    :emacs   '(message "major-mode is emacs-lisp-mode")
+                    :default '(message "default func"))))
+```
+
+Note: above element priority of `mykie:conditions` is high than below condition.
+So you can't call :default function if you are selecting region and if
+you set :region's function.
 
 ## Example
 Below codes are samples for mykie.el
@@ -49,15 +96,14 @@ Below codes are samples for mykie.el
   "This is example function for C-j, but you can use this function"
   (interactive)
   (mykie
-   :default            '(message "this is default function")
-   :repeat             '(message "this is executed if pushed same point")
-   :default&bolp       '(message "this is called if pushed at bolp")
-   :default&eolp       '(message "this is called if pushed at eolp")
-   :C-u&bolp           '(message "this is called if pushed at bolp after pushed C-u")
-   :C-u&eolp           '(message "this is called if pushed at eolp after pushed C-u")
-   :region-handle-flag 'copy ; you can specify 'kill too
-   :region             '(message "this is called if pushed it when selecting region")
-   :region&C-u         '(message "this is called if pushed it after pushed C-u when selecting region")))
+   :default    '(message "this is default function")
+   :repeat     '(message "this is executed if pushed same point")
+   :bolp       '(message "this is called if pushed at bolp")
+   :eolp       '(message "this is called if pushed at eolp")
+   :C-u&bolp   '(message "this is called if pushed at bolp after pushed C-u")
+   :C-u&eolp   '(message "this is called if pushed at eolp after pushed C-u")
+   :region     '(message "this is called if pushed it when selecting region")
+   :region&C-u '(message "this is called if pushed it after pushed C-u when selecting region")))
 (global-set-key (kbd "C-o") mykie-sample)
 ```
 
@@ -70,8 +116,7 @@ For example:
   (interactive)
   (mykie
    :default    '(message "default func")
-   :use-C-u-num t ; require this keyword variable
-   :C-u        '(case mykie:C-u-num
+   :C-u        '(case (mykie:C-u-num)
                   (1 (message "you pushed C-u one time, aren't you?"))
                   (2 (message "you pushed C-u two times, aren't you?"))
                   (t (message (format "you pushed C-u %d times, aren't you?"
