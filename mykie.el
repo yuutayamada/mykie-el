@@ -37,6 +37,31 @@
 (eval-when-compile (require 'cl))
 (require 'thingatpt)
 
+(defvar mykie:conditions
+  '((when (region-active-p)
+      (or (and current-prefix-arg
+               :region&C-u)
+          :region))
+    (when current-prefix-arg
+      (or (and (eobp)        :C-u&eobp)
+          (and (bobp)        :C-u&bobp)))
+    (when current-prefix-arg
+      (or (and (bolp)        :C-u&bolp)
+          (and (eolp)        :C-u&eolp)))
+    (when current-prefix-arg :C-u)
+    (when (mykie:repeat-p)   :repeat)
+    (when (minibufferp)      :minibuff)
+    (when (bobp)             :bobp)
+    (when (eobp)             :eobp)
+    (when (bolp)             :bolp)
+    (when (eolp)             :eolp))
+  "This variable is evaluated in mykie's loop by each the when statement.
+Then if the when statement is match, return value(like :C-u) and then
+same keyword's function that you are specified is evaluated.
+Note: Order is important. Above list element have more priority than
+below elements. If you dislike :repeat's priority, then you can change
+this behavior by this variable.")
+
 (defvar mykie:condition-list
   `((c-mode    ("<"  . ".h>"))
     (jade-mode ("#{" . "}"))
@@ -65,16 +90,6 @@
     (word (setq current-prefix-arg nil))
     (t    (setq current-prefix-arg nil)))
   (call-interactively 'query-replace-regexp))
-
-(defun mykie:get-C-u-state (C-u-arg use-C-u-num default)
-  (lexical-let
-      ((arg (if (and use-C-u-num (or C-u-arg (null default)))
-                (mykie:get-C-u-times)
-              C-u-arg)))
-    (typecase arg
-      (null   :default)
-      (number :C-u-num)
-      (list   :C-u-list-num))))
 
 (defun mykie:backword (type)
   (let ((regexp
@@ -159,67 +174,40 @@ Example
     (funcall 'eval `(progn ,func))))
   (run-hooks 'post-command-hook))
 
-(defun* mykie:execute-from-functions (function &optional bolp-func eolp-func
-                                              &key default)
-  (cond ((and bolp-func (bolp)) (mykie:execute bolp-func))
-        ((and eolp-func (eolp)) (mykie:execute eolp-func))
-        (t (mykie:execute (or function default)))))
-
 (defun mykie:repeat-p ()
   (equal this-command last-command))
-
-(defun mykie:execute-by-type (default thing-type
-                             C-u&string C-u&string&bolp C-u&string&eolp
-                             C-u&number C-u&number&bolp C-u&number&eolp)
-  (setq mykie:current-thing (mykie:get-thing thing-type))
-  (case (car mykie:current-thing)
-    (:string
-     (mykie:execute-from-functions
-      C-u&string
-      C-u&string&bolp C-u&string&eolp
-      :default default))
-    (:number
-     (mykie:execute-from-functions
-      C-u&number
-      C-u&number&bolp C-u&number&eolp
-      :default default))))
-
-(defun mykie:default (default default&bolp default&eolp repeat)
-  (if (and repeat (mykie:repeat-p))
-      (mykie:execute repeat)
-    (mykie:execute-from-functions
-     default default&bolp default&eolp)))
-
-(defun mykie:region (C-u region-handle-flag region region&C-u default deactivate-region)
-  (setq mykie:region-str (buffer-substring (region-beginning) (region-end)))
-  (when region-handle-flag
-    (mykie:kill-or-copy-region region-handle-flag))
-  (cond ((and region&C-u C-u)
-         (mykie:execute region&C-u))
-        (region
-         (mykie:execute region))
-        (t (mykie:execute default)))
-  (mykie:deactivate-region-maybe C-u deactivate-region  region region&C-u))
-
-(defun mykie:deactivate-region-maybe (C-u deactivate-region region region&C-u)
-  (when (or (and (eq deactivate-region 'region) (not C-u) region)
-            (and (eq deactivate-region 'region&C-u) C-u region&C-u)
-            (and (eq deactivate-region t) (or region region&C-u)))
-    (deactivate-mark)))
 
 (defun mykie:get-C-u-times ()
   (setq mykie:C-u-num (truncate (log (or (car current-prefix-arg) 1) 4)))
   mykie:C-u-num)
 
-(defun* mykie (&key
-               default default&bolp default&eolp
-               C-u C-u&bolp C-u&eolp
-               C-u&string C-u&string&bolp C-u&string&eolp
-               C-u&number C-u&number&bolp C-u&number&eolp
-               region region-handle-flag region&C-u
-               repeat thing-type use-C-u-num deactivate-region)
+(defalias 'mykie:C-u-num 'mykie:get-C-u-times)
+
+(defun mykie:init (args)
+  (when (plist-get args :use-C-u-num)
+    (mykie:get-C-u-times))
+  (setq mykie:current-thing (mykie:get-thing (plist-get args :thing-type))))
+
+(defun mykie:region-init (args keyword)
+  (setq mykie:region-str
+        (buffer-substring (region-beginning) (region-end)))
+  (mykie:kill-or-copy-region
+   (plist-get args :region-handle-flag)))
+
+(defun mykie:deactivate-mark ()
+  (lexical-let
+      ((deactivation
+        (plist-get mykie:current-args :deactivate-region)))
+    (when (or (and (eq 'region     deactivation)
+                   (eq :region     mykie:current-funcname))
+              (and (eq 'region&C-u deactivation)
+                   (eq :region&C-u mykie:current-funcname))
+              (eq      't          deactivation))
+      (deactivate-mark))))
+
+(defun* mykie (&rest args &allow-other-keys)
   "Call function you are set functions.
-You can set below keyword:
+You can set below keyword by default:
 *Functions*
 :default - this is default function
 :default&bolp - call this if pushed key at bolp
@@ -231,9 +219,6 @@ You can set below keyword:
 :region&C-u - similar to above but call this if you pushed C-u before
 :repeat - call this if you pushed key at same point
 *Flags*
-:use-C-u-num - if you set non-nil to this, then you can use
-`mykie:C-u-num' variable that have number of C-u's pushed times(i.e.,
-prefix-argument).
 :region-handle-flag - you can set 'copy and 'kill
 If you set 'kill then region's string is killed.
 If you set 'copy then region's string is copied.
@@ -242,28 +227,17 @@ If you set 'region then deactivate region when you did not push C-u.
 If you set 'region&C-u then deactivate region when you pushed C-u.
 If you set t then deactivate region in both cases.
 You can use `mykie:region-str' variable that have region's string."
-  (interactive)
-  (lexical-let*
-      ((mykie:arg current-prefix-arg)
-       (mykie:C-u-state (mykie:get-C-u-state mykie:arg use-C-u-num default)))
-    (if (region-active-p) ; For region
-        (mykie:region mykie:arg region-handle-flag region region&C-u default deactivate-region)
-      (case mykie:C-u-state
-        (:default      ; not pushed C-u
-         (mykie:default default default&bolp default&eolp repeat))
-        (:C-u-list-num ; pushed C-u
-         (cond (C-u
-                (mykie:execute C-u))
-               ((or (and C-u&bolp (bolp))
-                    (and C-u&eolp (eolp)))
-                (mykie:execute-from-functions nil C-u&bolp C-u&eolp))
-               (t
-                (mykie:execute-by-type
-                 default thing-type
-                 C-u&string C-u&string&bolp C-u&string&eolp
-                 C-u&number C-u&number&bolp C-u&number&eolp))))
-        (:C-u-num ; if set t to use-C-u-num
-         (when C-u (mykie:execute C-u))))))
+  (mykie:init args)
+  (loop for condition in mykie:conditions
+        for keyword = (eval condition)
+        for func    = (plist-get args keyword)
+        for regionp = (case keyword ((:region :region&C-u) t))
+        if (member keyword args) do
+        (when regionp (mykie:region-init args keyword))
+        (mykie:execute func)
+        (when regionp (mykie:region-init-after args keyword))
+        (return)
+        finally (mykie:execute (plist-get args :default)))
   (unless (mykie:repeat-p)
     (setq mykie:current-point (point))))
 
