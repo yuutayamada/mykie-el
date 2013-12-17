@@ -307,7 +307,6 @@ You can use `mykie:region-str' variable that have region's string."
        (run-hooks 'mykie:region-before-init-hook)))
     (after
      (when (funcall mykie:region-func-predicate)
-       (mykie:deactivate-mark)
        (run-hooks 'mykie:region-after-init-hook)))))
 
 (provide 'mykie)
