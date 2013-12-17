@@ -63,16 +63,23 @@ below elements. If you dislike :repeat's priority, then you can change
 this behavior by this variable.")
 
 (defvar mykie:current-args '())
+(defvar mykie:region-before-init-hook '(mykie:region-init))
+(defvar mykie:region-after-init-hook  '(mykie:deactivate-mark))
 
 (defvar mykie:condition-list
   `((c-mode    ("<"  . ".h>"))
     (jade-mode ("#{" . "}"))
     (html-mode ("<"  . ">"))
     (t         ("\"" . "\""))))
+(defvar mykie:region-func-predicate
+  '(lambda ()
+     (and (region-active-p)
+          (case mykie:current-funcname ((:region :region&C-u) t)))))
 
 (defvar mykie:url
   "https://www.google.com/search?newwindow=1&q=")
 
+(defvar mykie:current-funcname nil)
 (defvar mykie:current-point "")
 (defvar mykie:region-str "")
 (defvar mykie:current-thing nil)
@@ -192,11 +199,11 @@ Example
    mykie:current-args  args
    mykie:current-thing (mykie:get-thing (plist-get args :thing-type))))
 
-(defun mykie:region-init (args keyword)
+(defun mykie:region-init ()
   (setq mykie:region-str
         (buffer-substring (region-beginning) (region-end)))
   (mykie:kill-or-copy-region
-   (plist-get args :region-handle-flag)))
+   (plist-get mykie:current-args :region-handle-flag)))
 
 (defun mykie:deactivate-mark ()
   (lexical-let
@@ -233,17 +240,27 @@ If you set t then deactivate region in both cases.
 You can use `mykie:region-str' variable that have region's string."
   (mykie:init args)
   (loop for condition in mykie:conditions
-        for keyword = (eval condition)
-        for func    = (plist-get args keyword)
-        for regionp = (case keyword ((:region :region&C-u) t))
-        if (member keyword args) do
-        (when regionp (mykie:region-init args keyword))
+        for funcname = (eval condition) ; set function name like :C-u
+        for func     = (plist-get args funcname)
+        if (member funcname args) do
+        (setq mykie:current-funcname funcname)
+        (mykie:run-hook 'before)
         (mykie:execute func)
-        (when regionp (mykie:region-init-after args keyword))
+        (mykie:run-hook 'after)
         (return)
         finally (mykie:execute (plist-get args :default)))
   (unless (mykie:repeat-p)
     (setq mykie:current-point (point))))
+
+(defun mykie:run-hook (direction)
+  (case direction
+    (before
+     (when (funcall mykie:region-func-predicate)
+       (run-hooks 'mykie:region-before-init-hook)))
+    (after
+     (when (funcall mykie:region-func-predicate)
+       (mykie:deactivate-mark)
+       (run-hooks 'mykie:region-after-init-hook)))))
 
 (provide 'mykie)
 
