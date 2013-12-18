@@ -78,11 +78,6 @@ this behavior by this variable.")
 (defvar mykie:region-str "")
 (defvar mykie:C-u-num nil)
 
-(defun mykie:kill-or-copy-region (&optional copy-or-kill)
-  (case copy-or-kill
-    (kill (kill-region         (region-beginning) (region-end)))
-    (copy (copy-region-as-kill (region-beginning) (region-end)))))
-
 (defun mykie:loop (&rest keybinds)
   (lexical-let*
       (keynum
@@ -149,8 +144,9 @@ Example
 (defun mykie:region-init ()
   (setq mykie:region-str
         (buffer-substring (region-beginning) (region-end)))
-  (mykie:kill-or-copy-region
-   (plist-get mykie:current-args :region-handle-flag)))
+  (case (plist-get mykie:current-args :region-handle-flag)
+    (kill (kill-region         (region-beginning) (region-end)))
+    (copy (copy-region-as-kill (region-beginning) (region-end)))))
 
 (defun mykie:deactivate-mark ()
   (lexical-let
