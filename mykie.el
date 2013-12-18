@@ -4,7 +4,7 @@
 
 ;; Author: Yuta Yamada <cokesboy"at"gmail.com>
 ;; URL: https://github.com/yuutayamada/mykie
-;; Version: 0.0.4
+;; Version: 0.0.5
 ;; Keywords: Emacs, configuration, keybind
 
 ;;; License:
@@ -35,7 +35,6 @@
 ;; You can see more example : https://github.com/yuutayamada/mykie-el
 ;;; Code:
 (eval-when-compile (require 'cl))
-(require 'thingatpt)
 
 ;; CUSTOMIZE VARIABLE
 (defvar mykie:conditions
@@ -49,16 +48,14 @@
     (when current-prefix-arg
       (or (and (bolp)        :C-u&bolp)
           (and (eolp)        :C-u&eolp)))
-    (when current-prefix-arg
-      (mykie:thing :C-u))
-    (when current-prefix-arg :C-u)
+    (mykie:get-C-u-keyword)
+    (when current-prefix-arg :C-u) ; Use :C-u if C-u*X isn't exists
     (when (mykie:repeat-p)   :repeat)
     (when (minibufferp)      :minibuff)
     (when (bobp)             :bobp)
     (when (eobp)             :eobp)
     (when (bolp)             :bolp)
-    (when (eolp)             :eolp)
-    (mykie:thing))
+    (when (eolp)             :eolp))
   "This variable is evaluated in mykie's loop by each the when statement.
 Then if the when statement is match, return value(like :C-u) and then
 same keyword's function that you are specified is evaluated.
@@ -72,124 +69,14 @@ this behavior by this variable.")
 (defvar mykie:region-func-predicate
   '(lambda ()
      (and (region-active-p)
-          (case mykie:current-funcname ((:region :region&C-u) t)))))
-
-(defvar mykie:url
-  "https://www.google.com/search?newwindow=1&q=")
-
-;; I don't recommend to set t.
-(defvar mykie:use-develop-version nil)
+          (case mykie:current-state ((:region :region&C-u) t)))))
 
 ;; DYNAMIC VARIABLES
-(defvar mykie:current-funcname nil)
+(defvar mykie:current-state nil)
 (defvar mykie:current-args '())
 (defvar mykie:current-point "")
-(defvar mykie:current-thing nil)
 (defvar mykie:region-str "")
 (defvar mykie:C-u-num nil)
-
-;; TODO improve something
-(defvar mykie:condition-list
-  `((c-mode    ("<"  . ".h>"))
-    (jade-mode ("#{" . "}"))
-    (html-mode ("<"  . ">"))
-    (t         ("\"" . "\""))))
-
-(defun mykie:browse-url ()
-  (browse-url
-   (concat mykie:url "\"" mykie:region-str "\"")))
-
-(defun mykie:query-x-times (type)
-  (when (equal type 'word&num)
-    (string-to-number
-     (read-from-minibuffer "Input x times: "))))
-
-(defun mykie:replace-regexp (&optional direction)
-  (case direction
-    (word (setq current-prefix-arg nil))
-    (t    (setq current-prefix-arg nil)))
-  (call-interactively 'query-replace-regexp))
-
-(defun mykie:backword (type)
-  (let ((regexp
-         (case type
-           (:number "[0-9]")
-           (:string "[a-zA-Z0-9ぁ-んァ-ン上-黑]"))))
-    (if (looking-at "[ \n]")
-        (backward-char))
-    (while (looking-at regexp)
-      (backward-char))
-    (forward-char)))
-
-(defun mykie:kill-or-copy-region (&optional copy-or-kill)
-  (case copy-or-kill
-    (kill (kill-region         (region-beginning) (region-end)))
-    (copy (copy-region-as-kill (region-beginning) (region-end)))))
-
-(defun mykie:replace-string (word)
-  (let* ((separator
-          (loop for (mode . sep) in mykie:condition-list
-                if (or (equal major-mode mode) (equal t mode))
-                do (return (car sep)))))
-    (mykie:backword :string)
-    (kill-word 1)
-    (insert (car separator) word (cdr separator))))
-
-(defun mykie:replace-number (number)
-  (mykie:backword :number)
-  (kill-word 1)
-  (insert (number-to-string number))
-  (backward-char))
-
-(defun mykie:set-thing (thing-type)
-  "Set `thing-at-point's variable to `mykie:current-thing' variable.
-You can set following types to THING-TYPE:
-`symbol', `list', `sexp', `defun',
-`filename', `url', `email', `word', `sentence', `whitespace',
-`line', `number', and `page'.
-Default value is 'word.
-
-Return value is list pair like '(type thing).
-But if the type is 'word(i.e., by default), then the type is bit different.
- '(word&num [0-9]+) <- this is modified to point's number.
-or
- '(word&str \"point's string\")
-It's depending on the point's word.
-If point's word is number then return above form.
-If point's word is otherwise then return below form.
-You can change specified the THING-TYPE by :thing-type keyword.
-For example
- (mykie :thing-type 'line
-        :default '(print mykie:current-thing))"
-  (setq mykie:current-thing
-        (lexical-let* ((type  (or thing-type 'word))
-                       (thing (thing-at-point type)))
-          (case type
-            ('word (when thing
-                     (if (< 0 (string-to-number thing))
-                         `(word&num (string-to-number ,thing))
-                       `(word&str ,thing))))
-            (t `(,type ,thing))))))
-
-(defun mykie:symbol-concat (prefix suffix &optional sep)
-  "WORK IN PROGRESS"
-  (intern
-   (mapconcat (lambda (arg) (symbol-name arg))
-              `(,prefix ,suffix) (or sep ""))))
-
-(defun mykie:thing (&optional prefix)
-  "WORK IN PROGRESS
-This Return :C-u&word&str or :C-u&word&num if you set same keyword to
-`mykie's argument."
-  (when mykie:use-develop-version
-    (lexical-let
-        ((funcname
-          (if prefix
-              (mykie:symbol-concat prefix (car mykie:current-thing) "&")
-            (mykie:symbol-concat ': (car mykie:current-thing) ""))))
-      (when (member
-             funcname mykie:current-args)
-        funcname))))
 
 (defun mykie:loop (&rest keybinds)
   (lexical-let*
@@ -241,27 +128,35 @@ Example
 
 (defalias 'mykie:C-u-num 'mykie:get-C-u-times)
 
+(defun mykie:get-C-u-keyword ()
+  "Return :C-u or :C-u*X(X is replaced to C-u's pushed times)."
+  (lexical-let
+      ((times (mykie:get-C-u-times)))
+    (if (= 1 times)
+        :C-u
+      (intern (concat ":C-u*" (number-to-string times))))))
+
 (defun mykie:init (args)
   (when (plist-get args :use-C-u-num)
     (mykie:get-C-u-times))
-  (setq mykie:current-args  args)
-  (mykie:set-thing (plist-get args :thing-type)))
+  (setq mykie:current-args args))
 
 (defun mykie:region-init ()
   (setq mykie:region-str
         (buffer-substring (region-beginning) (region-end)))
-  (mykie:kill-or-copy-region
-   (plist-get mykie:current-args :region-handle-flag)))
+  (case (plist-get mykie:current-args :region-handle-flag)
+    (kill (kill-region         (region-beginning) (region-end)))
+    (copy (copy-region-as-kill (region-beginning) (region-end)))))
 
 (defun mykie:deactivate-mark ()
   (lexical-let
       ((deactivation
         (plist-get mykie:current-args :deactivate-region)))
     (when (or (and (eq 'region     deactivation)
-                   (eq :region     mykie:current-funcname))
+                   (eq :region     mykie:current-state))
               (and (eq 'region&C-u deactivation)
-                   (eq :region&C-u mykie:current-funcname))
-              (eq      't          deactivation))
+                   (eq :region&C-u mykie:current-state))
+              (eq      t          deactivation))
       (deactivate-mark))))
 
 (defun* mykie (&rest args &allow-other-keys)
@@ -288,10 +183,10 @@ If you set t then deactivate region in both cases.
 You can use `mykie:region-str' variable that have region's string."
   (mykie:init args)
   (loop for condition in mykie:conditions
-        for funcname = (eval condition) ; set function name like :C-u
-        for func     = (plist-get args funcname)
-        if (member funcname args) do
-        (setq mykie:current-funcname funcname)
+        for state = (eval condition)
+        for func  = (plist-get args state)
+        if (member state args) do
+        (setq mykie:current-state state)
         (mykie:run-hook 'before)
         (mykie:execute func)
         (mykie:run-hook 'after)

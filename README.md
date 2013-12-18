@@ -42,7 +42,8 @@ from version 0.0.4. For example:
     (when current-prefix-arg
       (or (and (bolp)        :C-u&bolp)
           (and (eolp)        :C-u&eolp)))
-    (when current-prefix-arg :C-u)
+    (mykie:get-C-u-keyword)
+    (when current-prefix-arg :C-u) ; Use :C-u if C-u*X isn't exists
     ;; -- this is NOT default condition --
     (case major-mode
       (org-mode        :org)
@@ -50,7 +51,6 @@ from version 0.0.4. For example:
     ;; -----------------------------------
     (when (mykie:repeat-p)   :repeat)
     (when (minibufferp)      :minibuff)
-    (mykie:thing)
     (when (bobp)             :bobp)
     (when (eobp)             :eobp)
     (when (bolp)             :bolp)
@@ -107,21 +107,19 @@ Below codes are samples for mykie.el
 (global-set-key (kbd "C-o") mykie-sample)
 ```
 
-Also you can combine a case statement and mykie:C-u-num that can get pushed
-times of C-u.
+Also you can utilize C-u's pushed times.
 For example:
 
 ```lisp
 (defun mykie-pushed-x-times ()
   (interactive)
   (mykie
-   :default    '(message "default func")
-   :C-u        '(case (mykie:C-u-num)
-                  (1 (message "you pushed C-u one time, aren't you?"))
-                  (2 (message "you pushed C-u two times, aren't you?"))
-                  (t (message (format "you pushed C-u %d times, aren't you?"
-                                      mykie:C-u-num))))
-   :region     'query-replace-regexp))
+   :default '(message "default func")
+   :C-u     '(minibuffer-message "C-u")
+   :C-u*2   '(minibuffer-message "You pushed C-u 2 times aren't you?")
+   :C-u*3   '(minibuffer-message "You pushed C-u 3 times aren't you?")
+   :C-u*4   '(minibuffer-message "You pushed C-u 4 times aren't you?")
+   :region  'query-replace-regexp))
 (global-set-key (kbd "C-o") mykie-pushed-x-times)
 ```
 
