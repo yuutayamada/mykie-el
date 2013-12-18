@@ -152,7 +152,7 @@ Example
                    (eq :region     mykie:current-funcname))
               (and (eq 'region&C-u deactivation)
                    (eq :region&C-u mykie:current-funcname))
-              (eq      't          deactivation))
+              (eq      t          deactivation))
       (deactivate-mark))))
 
 (defun* mykie (&rest args &allow-other-keys)
