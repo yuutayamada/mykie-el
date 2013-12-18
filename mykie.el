@@ -188,10 +188,10 @@ If you set t then deactivate region in both cases.
 You can use `mykie:region-str' variable that have region's string."
   (mykie:init args)
   (loop for condition in mykie:conditions
-        for funcname = (eval condition) ; set function name like :C-u
-        for func     = (plist-get args funcname)
-        if (member funcname args) do
-        (setq mykie:current-funcname funcname)
+        for state = (eval condition)
+        for func  = (plist-get args state)
+        if (member state args) do
+        (setq mykie:current-funcname state)
         (mykie:run-hook 'before)
         (mykie:execute func)
         (mykie:run-hook 'after)
