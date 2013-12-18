@@ -49,7 +49,8 @@
     (when current-prefix-arg
       (or (and (bolp)        :C-u&bolp)
           (and (eolp)        :C-u&eolp)))
-    (when current-prefix-arg :C-u)
+    (mykie:get-C-u-keyword)
+    (when current-prefix-arg :C-u) ; Use :C-u if C-u*X isn't exists
     (when (mykie:repeat-p)   :repeat)
     (when (minibufferp)      :minibuff)
     (when (bobp)             :bobp)
@@ -132,6 +133,14 @@ Example
   mykie:C-u-num)
 
 (defalias 'mykie:C-u-num 'mykie:get-C-u-times)
+
+(defun mykie:get-C-u-keyword ()
+  "Return :C-u or :C-u*X(X is replaced to C-u's pushed times)."
+  (lexical-let
+      ((times (mykie:get-C-u-times)))
+    (if (= 1 times)
+        :C-u
+      (intern (concat ":C-u*" (number-to-string times))))))
 
 (defun mykie:init (args)
   (when (plist-get args :use-C-u-num)
