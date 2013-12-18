@@ -35,7 +35,6 @@
 ;; You can see more example : https://github.com/yuutayamada/mykie-el
 ;;; Code:
 (eval-when-compile (require 'cl))
-(require 'thingatpt)
 
 ;; CUSTOMIZE VARIABLE
 (defvar mykie:conditions
