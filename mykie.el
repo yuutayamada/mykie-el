@@ -49,16 +49,13 @@
     (when current-prefix-arg
       (or (and (bolp)        :C-u&bolp)
           (and (eolp)        :C-u&eolp)))
-    (when current-prefix-arg
-      (mykie:thing :C-u))
     (when current-prefix-arg :C-u)
     (when (mykie:repeat-p)   :repeat)
     (when (minibufferp)      :minibuff)
     (when (bobp)             :bobp)
     (when (eobp)             :eobp)
     (when (bolp)             :bolp)
-    (when (eolp)             :eolp)
-    (mykie:thing))
+    (when (eolp)             :eolp))
   "This variable is evaluated in mykie's loop by each the when statement.
 Then if the when statement is match, return value(like :C-u) and then
 same keyword's function that you are specified is evaluated.
@@ -74,122 +71,17 @@ this behavior by this variable.")
      (and (region-active-p)
           (case mykie:current-funcname ((:region :region&C-u) t)))))
 
-(defvar mykie:url
-  "https://www.google.com/search?newwindow=1&q=")
-
-;; I don't recommend to set t.
-(defvar mykie:use-develop-version nil)
-
 ;; DYNAMIC VARIABLES
 (defvar mykie:current-funcname nil)
 (defvar mykie:current-args '())
 (defvar mykie:current-point "")
-(defvar mykie:current-thing nil)
 (defvar mykie:region-str "")
 (defvar mykie:C-u-num nil)
-
-;; TODO improve something
-(defvar mykie:condition-list
-  `((c-mode    ("<"  . ".h>"))
-    (jade-mode ("#{" . "}"))
-    (html-mode ("<"  . ">"))
-    (t         ("\"" . "\""))))
-
-(defun mykie:browse-url ()
-  (browse-url
-   (concat mykie:url "\"" mykie:region-str "\"")))
-
-(defun mykie:query-x-times (type)
-  (when (equal type 'word&num)
-    (string-to-number
-     (read-from-minibuffer "Input x times: "))))
-
-(defun mykie:replace-regexp (&optional direction)
-  (case direction
-    (word (setq current-prefix-arg nil))
-    (t    (setq current-prefix-arg nil)))
-  (call-interactively 'query-replace-regexp))
-
-(defun mykie:backword (type)
-  (let ((regexp
-         (case type
-           (:number "[0-9]")
-           (:string "[a-zA-Z0-9ぁ-んァ-ン上-黑]"))))
-    (if (looking-at "[ \n]")
-        (backward-char))
-    (while (looking-at regexp)
-      (backward-char))
-    (forward-char)))
 
 (defun mykie:kill-or-copy-region (&optional copy-or-kill)
   (case copy-or-kill
     (kill (kill-region         (region-beginning) (region-end)))
     (copy (copy-region-as-kill (region-beginning) (region-end)))))
-
-(defun mykie:replace-string (word)
-  (let* ((separator
-          (loop for (mode . sep) in mykie:condition-list
-                if (or (equal major-mode mode) (equal t mode))
-                do (return (car sep)))))
-    (mykie:backword :string)
-    (kill-word 1)
-    (insert (car separator) word (cdr separator))))
-
-(defun mykie:replace-number (number)
-  (mykie:backword :number)
-  (kill-word 1)
-  (insert (number-to-string number))
-  (backward-char))
-
-(defun mykie:set-thing (thing-type)
-  "Set `thing-at-point's variable to `mykie:current-thing' variable.
-You can set following types to THING-TYPE:
-`symbol', `list', `sexp', `defun',
-`filename', `url', `email', `word', `sentence', `whitespace',
-`line', `number', and `page'.
-Default value is 'word.
-
-Return value is list pair like '(type thing).
-But if the type is 'word(i.e., by default), then the type is bit different.
- '(word&num [0-9]+) <- this is modified to point's number.
-or
- '(word&str \"point's string\")
-It's depending on the point's word.
-If point's word is number then return above form.
-If point's word is otherwise then return below form.
-You can change specified the THING-TYPE by :thing-type keyword.
-For example
- (mykie :thing-type 'line
-        :default '(print mykie:current-thing))"
-  (setq mykie:current-thing
-        (lexical-let* ((type  (or thing-type 'word))
-                       (thing (thing-at-point type)))
-          (case type
-            ('word (when thing
-                     (if (< 0 (string-to-number thing))
-                         `(word&num (string-to-number ,thing))
-                       `(word&str ,thing))))
-            (t `(,type ,thing))))))
-
-(defun mykie:symbol-concat (prefix suffix &optional sep)
-  "WORK IN PROGRESS"
-  (intern
-   (mapconcat (lambda (arg) (symbol-name arg))
-              `(,prefix ,suffix) (or sep ""))))
-
-(defun mykie:thing (&optional prefix)
-  "WORK IN PROGRESS
-This Return :C-u&word&str or :C-u&word&num if you set same keyword to
-`mykie's argument."
-  (when mykie:use-develop-version
-    (lexical-let
-        ((funcname
-          (if prefix
-              (mykie:symbol-concat prefix (car mykie:current-thing) "&")
-            (mykie:symbol-concat ': (car mykie:current-thing) ""))))
-      (when (member
-             funcname mykie:current-args)
-        funcname))))
 
 (defun mykie:loop (&rest keybinds)
   (lexical-let*
@@ -244,8 +136,7 @@ Example
 (defun mykie:init (args)
   (when (plist-get args :use-C-u-num)
     (mykie:get-C-u-times))
-  (setq mykie:current-args  args)
-  (mykie:set-thing (plist-get args :thing-type)))
+  (setq mykie:current-args args))
 
 (defun mykie:region-init ()
   (setq mykie:region-str
