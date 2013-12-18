@@ -70,10 +70,10 @@ this behavior by this variable.")
 (defvar mykie:region-func-predicate
   '(lambda ()
      (and (region-active-p)
-          (case mykie:current-funcname ((:region :region&C-u) t)))))
+          (case mykie:current-state ((:region :region&C-u) t)))))
 
 ;; DYNAMIC VARIABLES
-(defvar mykie:current-funcname nil)
+(defvar mykie:current-state nil)
 (defvar mykie:current-args '())
 (defvar mykie:current-point "")
 (defvar mykie:region-str "")
@@ -158,9 +158,9 @@ Example
       ((deactivation
         (plist-get mykie:current-args :deactivate-region)))
     (when (or (and (eq 'region     deactivation)
-                   (eq :region     mykie:current-funcname))
+                   (eq :region     mykie:current-state))
               (and (eq 'region&C-u deactivation)
-                   (eq :region&C-u mykie:current-funcname))
+                   (eq :region&C-u mykie:current-state))
               (eq      t          deactivation))
       (deactivate-mark))))
 
@@ -191,7 +191,7 @@ You can use `mykie:region-str' variable that have region's string."
         for state = (eval condition)
         for func  = (plist-get args state)
         if (member state args) do
-        (setq mykie:current-funcname state)
+        (setq mykie:current-state state)
         (mykie:run-hook 'before)
         (mykie:execute func)
         (mykie:run-hook 'after)
