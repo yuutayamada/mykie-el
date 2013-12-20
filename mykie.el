@@ -70,6 +70,12 @@
     (when (bolp)             :bolp)
     (when (eolp)             :eolp)))
 
+(defvar mykie:before-user-region-coditions '())
+(defvar mykie:after-user-region-coditions '())
+(defvar mykie:before-user-prefix-arg-coditions '())
+(defvar mykie:after-user-prefix-arg-coditions '())
+(defvar mykie:before-user-normal-coditions '())
+(defvar mykie:after-user-normal-coditions '())
 
 (defvar mykie:conditions '()
   "This variable is evaluated in mykie's loop by each the when statement.
@@ -83,11 +89,17 @@ this behavior by this variable.")
   (setq mykie:conditions
         (append
          ;; REGION
+         mykie:before-user-region-coditions
          mykie:region-conditions
+         mykie:after-user-region-coditions
          ;; PREFIX-ARGUMENT
+         mykie:before-user-prefix-arg-coditions
          mykie:prefix-arg-conditions
+         mykie:after-user-prefix-arg-coditions
          ;; NORMAL
-         mykie:normal-conditions)))
+         mykie:before-user-normal-coditions
+         mykie:normal-conditions
+         mykie:after-user-normal-coditions)))
 
 (defvar mykie:region-before-init-hook '(mykie:region-init))
 (defvar mykie:region-after-init-hook  '(mykie:deactivate-mark))
