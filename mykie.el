@@ -1,4 +1,4 @@
-;;; mykie.el --- user keybinding support tool for Emacs
+;;; mykie.el --- Command multiplexer: Register multiple functions to a keybind
 
 ;; Copyright (C) 2013 by Yuta Yamada
 
