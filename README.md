@@ -42,7 +42,7 @@ from version 0.0.4. For example:
     (when current-prefix-arg
       (or (and (bolp)        :C-u&bolp)
           (and (eolp)        :C-u&eolp)))
-    (mykie:get-C-u-keyword)
+    (mykie:get-prefix-arg-state)
     (when current-prefix-arg :C-u) ; Use :C-u if C-u*X isn't exists
     ;; -- this is NOT default condition --
     (case major-mode
@@ -119,6 +119,21 @@ For example:
    :C-u*2   '(minibuffer-message "You pushed C-u 2 times aren't you?")
    :C-u*3   '(minibuffer-message "You pushed C-u 3 times aren't you?")
    :C-u*4   '(minibuffer-message "You pushed C-u 4 times aren't you?")
+   :region  'query-replace-regexp))
+(global-set-key (kbd "C-o") mykie-pushed-x-times)
+```
+
+Also you can utilize M-[0-9] pushing times.
+```lisp
+(defun mykie-pushed-x-times ()
+  (interactive)
+  (mykie
+   :default '(message "default func")
+   :C-u     '(minibuffer-message "C-u")
+   :M-1     '(minibuffer-message "You pushed M-1 aren't you?")
+   :M-2     '(minibuffer-message "You pushed M-2 aren't you?")
+   :M-3     '(minibuffer-message "You pushed M-3 aren't you?")
+   :M-12    '(minibuffer-message "You pushed M-1 and M-2 aren't you?")
    :region  'query-replace-regexp))
 (global-set-key (kbd "C-o") mykie-pushed-x-times)
 ```
