@@ -64,6 +64,8 @@
 
 (defvar mykie:normal-conditions
   '((when (mykie:repeat-p)   :repeat)
+    (mykie:get-thing-state   'email)
+    (mykie:get-thing-state   'url)
     (when (minibufferp)      :minibuff)
     (when (bobp)             :bobp)
     (when (eobp)             :eobp)
