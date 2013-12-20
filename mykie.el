@@ -1,4 +1,4 @@
-;;; mykie.el --- user keybinding support tool for Emacs
+;;; mykie.el --- Command multiplexer: Register multiple functions to a keybind
 
 ;; Copyright (C) 2013 by Yuta Yamada
 
@@ -32,6 +32,12 @@
 ;;
 ;; Above function call newline-and-indent by default,
 ;; But call query-replace-regexp function if you select region.
+;;
+;; In short form:
+;; (mykie:global-set-key (kbd "C-j")
+;;   :default 'newline-and-indent
+;;   :region 'query-replace-regexp)
+;;
 ;; You can see more example : https://github.com/yuutayamada/mykie-el
 ;;; Code:
 (eval-when-compile (require 'cl))
@@ -214,6 +220,34 @@ You can use `mykie:region-str' variable that have region's string."
     (after
      (when (funcall mykie:region-func-predicate)
        (run-hooks 'mykie:region-after-init-hook)))))
+
+(defun mykie:define-key (keymap key &rest args)
+  "In KEYMAP, define key sequence KEY as `mykie' command with ARGS.
+In other words, `mykie' + `define-key'.
+
+Example:
+ (mykie:define-key global-map \"y\"
+   :default 'self-insert-command
+   :region '(message \"%s\" mykie:region-str)
+   :C-u '(message \"C-u y\"))"
+  (lexical-let ((key key) (args args))
+    (define-key keymap key
+      (lambda ()
+        (interactive)
+        (apply 'mykie args)))))
+(put 'mykie:define-key 'lisp-indent-function 2)
+
+(defun mykie:global-set-key (key &rest args)
+  "Give KEY a global binding as `mykie' command.
+In other words, `mykie' + `global-set-key'.
+
+Example:
+ (mykie:global-set-key \"z\"
+   :default 'self-insert-command
+   :region '(message \"%s\" mykie:region-str)
+   :C-u '(message \"C-u z\"))"
+  (apply 'mykie:define-key global-map key args))
+(put 'mykie:global-set-key 'lisp-indent-function 1)
 
 (provide 'mykie)
 
