@@ -48,9 +48,8 @@
     (when current-prefix-arg
       (or (and (bolp)        :C-u&bolp)
           (and (eolp)        :C-u&eolp)))
-    (mykie:get-C-u-keyword)
-    (when (listp current-prefix-arg) :C-u) ; Use :C-u if C-u*X isn't exists
-    (mykie:get-M-number-keyword)
+    (mykie:get-prefix-arg-state)
+    (when current-prefix-arg :C-u) ; Use :C-u if C-u*N isn't exists
     (when (mykie:repeat-p)   :repeat)
     (when (minibufferp)      :minibuff)
     (when (bobp)             :bobp)
@@ -124,25 +123,26 @@ Example
 (defun mykie:repeat-p ()
   (equal this-command last-command))
 
-(defun mykie:get-M-number-keyword ()
-  "Return :M-X(X is number)."
-  (if (numberp current-prefix-arg)
-      (intern (concat ":M-" (number-to-string current-prefix-arg)))))
-
 (defun mykie:get-C-u-times ()
   (setq mykie:C-u-num (truncate (log (or (car current-prefix-arg) 1) 4)))
   mykie:C-u-num)
 
 (defalias 'mykie:C-u-num 'mykie:get-C-u-times)
 
-(defun mykie:get-C-u-keyword ()
-  "Return :C-u or :C-u*X(X is replaced to C-u's pushed times)."
-  (when (listp current-prefix-arg)
-    (lexical-let
-        ((times (mykie:get-C-u-times)))
-      (if (= 1 times)
-          :C-u
-        (intern (concat ":C-u*" (number-to-string times)))))))
+(defun mykie:get-prefix-arg-state ()
+  "Return keyword like :C-u, :C-*N or :M-N.
+If current-prefix-arg is list, return :C-u or :C-u*N(N is replaced to
+C-u's pushed times).
+If current-prefix-arg is number, return :M-N(the N is replaced number
+like M-1.). You can change the M-N's number by pushing M-[0-9] before
+call `mykie' function."
+  (typecase current-prefix-arg
+    (list   (lexical-let
+                ((times (mykie:get-C-u-times)))
+              (if (= 1 times)
+                  :C-u
+                (intern (concat ":C-u*" (number-to-string times))))))
+    (number (intern (concat ":M-" (number-to-string current-prefix-arg))))))
 
 (defun mykie:init (args)
   (when (plist-get args :use-C-u-num)
