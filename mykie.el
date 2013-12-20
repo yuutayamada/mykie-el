@@ -113,6 +113,7 @@ this behavior by this variable.")
 (defvar mykie:current-state nil)
 (defvar mykie:current-args '())
 (defvar mykie:current-point "")
+(defvar mykie:current-thing nil)
 (defvar mykie:region-str "")
 (defvar mykie:C-u-num nil)
 
@@ -172,6 +173,23 @@ Example
 THEN-FORM and ELSE-FORMS are then excuted just like in `if'."
   `(let ((it ,test-form))
      (if it ,then-form ,@else-forms)))
+
+(defun* mykie:get-thing-state (thing &key prefix)
+  (lexical-let
+      ((thing-state (intern (concat ":" prefix (symbol-name thing)))))
+    (when (and (plist-get mykie:current-args thing-state)
+               (or (not prefix)
+                   (and prefix (equal "C-u&"    prefix)
+                        current-prefix-arg)
+                   (and prefix (equal "region&" prefix)
+                        (region-active-p))))
+      (case thing
+        ((url email)
+         (mykie:aif (thing-at-point thing)
+                    (setq mykie:current-thing it)
+                    (setq mykie:current-thing nil))
+         (when mykie:current-thing
+           thing-state))))))
 
 (defun mykie:get-prefix-arg-state ()
   "Return keyword like :C-u, :C-*N or :M-N.
