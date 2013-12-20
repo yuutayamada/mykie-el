@@ -110,9 +110,10 @@ Example
   (run-hooks 'pre-command-hook)
   (cond
    ((commandp func)
-    (unwind-protect
-        (funcall 'call-interactively func)
-      (setq last-command func)))
+    ;; Do not use `setq' because the command loop overrides
+    ;; `last-command', so use timer here.
+    (run-with-timer 0 nil 'set 'last-command func)
+    (funcall 'call-interactively func))
    ((functionp func)
     (funcall func))
    ((listp func)
