@@ -50,7 +50,8 @@
           :region))))
 
 (defvar mykie:prefix-arg-conditions
-  '((mykie:get-thing-state 'email :prefix "C-u&")
+  '((mykie:get-major-mode-state t)
+    (mykie:get-thing-state 'email :prefix "C-u&")
     (mykie:get-thing-state 'url   :prefix "C-u&")
     (when current-prefix-arg
       (or (and (eobp)        :C-u&eobp)
@@ -64,6 +65,7 @@
 
 (defvar mykie:normal-conditions
   '((when (mykie:repeat-p)   :repeat)
+    (mykie:get-major-mode-state)
     (mykie:get-thing-state   'email)
     (mykie:get-thing-state   'url)
     (when (minibufferp)      :minibuff)
