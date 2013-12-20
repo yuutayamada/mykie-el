@@ -111,8 +111,8 @@ Example
   \"j\" (lambda ()
         (newline-and-indent))
   \"m\" 'newline
-  \"g\" (if current-prefix-arg
-            (keyboard-quit)))"
+  \"g\" '(if current-prefix-arg
+             (keyboard-quit)))"
   (run-hooks 'pre-command-hook)
   (cond
    ((commandp func)
