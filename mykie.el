@@ -167,6 +167,12 @@ Example
 
 (defalias 'mykie:C-u-num 'mykie:get-C-u-times)
 
+(defmacro mykie:aif (test-form then-form &rest else-forms)
+  "Like `if' but set the result of TEST-FORM in a temprary variable called `it'.
+THEN-FORM and ELSE-FORMS are then excuted just like in `if'."
+  `(let ((it ,test-form))
+     (if it ,then-form ,@else-forms)))
+
 (defun mykie:get-prefix-arg-state ()
   "Return keyword like :C-u, :C-*N or :M-N.
 If current-prefix-arg is list, return :C-u or :C-u*N(N is replaced to
