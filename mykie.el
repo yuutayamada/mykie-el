@@ -4,7 +4,7 @@
 
 ;; Author: Yuta Yamada <cokesboy"at"gmail.com>
 ;; URL: https://github.com/yuutayamada/mykie
-;; Version: 0.0.5
+;; Version: 0.0.6
 ;; Keywords: Emacs, configuration, keybind
 
 ;;; License:
