@@ -3,7 +3,7 @@
 ;; Copyright (C) 2013 by Yuta Yamada
 
 ;; Author: Yuta Yamada <cokesboy"at"gmail.com>
-;; URL: https://github.com/yuutayamada/mykie
+;; URL: https://github.com/yuutayamada/mykie-el
 ;; Version: 0.0.6
 ;; Keywords: Emacs, configuration, keybind
 
