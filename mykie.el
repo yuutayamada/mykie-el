@@ -43,11 +43,15 @@
 (eval-when-compile (require 'cl))
 
 ;; CUSTOMIZE VARIABLE
-(defvar mykie:conditions
+(defvar mykie:region-conditions
   '((when (region-active-p)
       (or (and current-prefix-arg
                :region&C-u)
-          :region))
+          :region))))
+
+(defvar mykie:prefix-arg-conditions
+  '((mykie:get-thing-state 'email :prefix "C-u&")
+    (mykie:get-thing-state 'url   :prefix "C-u&")
     (when current-prefix-arg
       (or (and (eobp)        :C-u&eobp)
           (and (bobp)        :C-u&bobp)))
@@ -55,19 +59,35 @@
       (or (and (bolp)        :C-u&bolp)
           (and (eolp)        :C-u&eolp)))
     (mykie:get-prefix-arg-state)
-    (when current-prefix-arg :C-u) ; Use :C-u if C-u*N isn't exists
-    (when (mykie:repeat-p)   :repeat)
+    ;; Use :C-u if C-u*N isn't exists
+    (when current-prefix-arg :C-u)))
+
+(defvar mykie:normal-conditions
+  '((when (mykie:repeat-p)   :repeat)
     (when (minibufferp)      :minibuff)
     (when (bobp)             :bobp)
     (when (eobp)             :eobp)
     (when (bolp)             :bolp)
-    (when (eolp)             :eolp))
+    (when (eolp)             :eolp)))
+
+
+(defvar mykie:conditions '()
   "This variable is evaluated in mykie's loop by each the when statement.
 Then if the when statement is match, return value(like :C-u) and then
 same keyword's function that you are specified is evaluated.
 Note: Order is important. Above list element have more priority than
 below elements. If you dislike :repeat's priority, then you can change
 this behavior by this variable.")
+
+(defun mykie:initialize ()
+  (setq mykie:conditions
+        (append
+         ;; REGION
+         mykie:region-conditions
+         ;; PREFIX-ARGUMENT
+         mykie:prefix-arg-conditions
+         ;; NORMAL
+         mykie:normal-conditions)))
 
 (defvar mykie:region-before-init-hook '(mykie:region-init))
 (defvar mykie:region-after-init-hook  '(mykie:deactivate-mark))
@@ -248,6 +268,9 @@ Example:
    :C-u '(message \"C-u z\"))"
   (apply 'mykie:define-key global-map key args))
 (put 'mykie:global-set-key 'lisp-indent-function 1)
+
+(unless mykie:conditions
+  (mykie:initialize))
 
 (provide 'mykie)
 
