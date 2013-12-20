@@ -218,6 +218,12 @@ call `mykie' function."
 ;; Backward compatibility
 (defalias 'mykie:get-C-u-keyword 'mykie:get-prefix-arg-state)
 
+(defun mykie:get-skk-state ()
+  (when (bound-and-true-p skk-mode)
+    (case (bound-and-true-p skk-henkan-mode)
+      (active :skk-active)
+      (on     :skk-on))))
+
 (defun mykie:init (args)
   (when (plist-get args :use-C-u-num)
     (mykie:get-C-u-times))
