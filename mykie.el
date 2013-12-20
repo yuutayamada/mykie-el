@@ -191,6 +191,15 @@ THEN-FORM and ELSE-FORMS are then excuted just like in `if'."
          (when mykie:current-thing
            thing-state))))))
 
+(defun mykie:get-major-mode-state (&optional C-u-prefix)
+  (when (or (and C-u-prefix
+                 current-prefix-arg)
+            (and (not C-u-prefix)
+                 (null current-prefix-arg)))
+    (lexical-let
+        ((prefix (if C-u-prefix ":C-u&" ":")))
+      (intern (concat prefix (symbol-name major-mode))))))
+
 (defun mykie:get-prefix-arg-state ()
   "Return keyword like :C-u, :C-*N or :M-N.
 If current-prefix-arg is list, return :C-u or :C-u*N(N is replaced to
