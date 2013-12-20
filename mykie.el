@@ -144,6 +144,9 @@ call `mykie' function."
                 (intern (concat ":C-u*" (number-to-string times))))))
     (number (intern (concat ":M-" (number-to-string current-prefix-arg))))))
 
+;; Backward compatibility
+(defalias 'mykie:get-C-u-keyword 'mykie:get-prefix-arg-state)
+
 (defun mykie:init (args)
   (when (plist-get args :use-C-u-num)
     (mykie:get-C-u-times))
