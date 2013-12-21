@@ -331,6 +331,15 @@ Example:
   (apply 'mykie:define-key global-map (mykie:format-key key) args))
 (put 'mykie:global-set-key 'lisp-indent-function 1)
 
+(defun mykie:define-key-with-self-key (key &rest args)
+  "Set self-insert-key(KEY) with `mykie' command.
+Example:
+  (mykie:define-key-with-self-key
+      \"a\" :C-u '(message \"I am C-u\"))"
+  (apply 'mykie:define-key global-map (mykie:format-key key)
+         (append args '(:default self-insert-command))))
+(put 'mykie:define-key-with-self-key 'lisp-indent-function 1)
+
 (unless mykie:conditions
   (mykie:initialize))
 
