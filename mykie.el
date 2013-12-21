@@ -113,6 +113,9 @@ this behavior by this variable.")
      (and (region-active-p)
           (case mykie:current-state ((:region :region&C-u) t)))))
 
+;; INTERNAL VARIABLES
+(defvar mykie:keymaps nil)
+
 ;; DYNAMIC VARIABLES
 (defvar mykie:current-state nil)
 (defvar mykie:current-args '())
@@ -311,12 +314,25 @@ Example:
    :default 'self-insert-command
    :region '(message \"%s\" mykie:region-str)
    :C-u '(message \"C-u y\"))"
-  (lexical-let ((key (mykie:format-key key))
-                (args args))
-    (define-key keymap key
-      (lambda ()
-        (interactive)
-        (apply 'mykie args)))))
+  (unless (memq keymap mykie:keymaps) (push keymap mykie:keymaps))
+  (lexical-let* ((key (mykie:format-key key)) 
+                 (args args)
+                 ;; Workaround: Assign command name
+                 (sym (intern (format 
+                               "mykie:%s:%s:%s"
+                               ;; Some programs check command name by
+                               ;; (string-match "self-insert-command" command-name)
+                               (if (eq (plist-get args :default) 'self-insert-command)
+                                   "self-insert-command" "key")
+                               ;; find keymap index
+                               (loop for k in mykie:keymaps
+                                     for i from 0
+                                     if (eq k keymap) 
+                                     return (- (length mykie:keymaps) i))
+                               ;; Use unique string for key(string or vector)
+                               (sha1 (format "%S" key))))))
+    (fset sym (lambda () (interactive) (apply 'mykie args)))
+    (define-key keymap key sym)))
 (put 'mykie:define-key 'lisp-indent-function 2)
 
 (defun mykie:global-set-key (key &rest args)
