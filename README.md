@@ -1,5 +1,5 @@
 # mykie
-Keybind configuration support tool for Emacs
+Command multiplexer: Register multiple functions to a keybind
 
 ## Description
 This program can register multiple function to a keybind easily.
@@ -10,10 +10,25 @@ You can install from MELPA by M-x package-install RET mykie.
 ## Configuration
 Mykie.el don't serve specific command.
 You need to register your keybinds.
+For example:
 
 ```lisp
 (require 'mykie)
-;; this is example
+;; you can specify like this(from version 0.0.7)
+(mykie:global-set-key \"z\"
+   :default 'self-insert-command
+   :region '(message \"%s\" mykie:region-str)
+   :C-u '(message \"C-u z\"))
+;; you can specify like this(from version 0.0.7)
+(mykie:define-key global-map \"y\"
+   :default 'self-insert-command
+   :region '(message \"%s\" mykie:region-str)
+   :C-u '(message \"C-u y\"))
+```
+
+You can specify like this too.
+
+```lisp
 (global-set-key (kbd "C-j")
   '(lambda ()
      (interactive)
@@ -27,6 +42,7 @@ You need to register your keybinds.
       :region             'query-replace-regexp)))
 ```
 
+### Change condition(from v0.0.4)
 You can change condition's order and condition by `mykie:conditions` variable
 from version 0.0.4. For example:
 
@@ -57,8 +73,7 @@ from version 0.0.4. For example:
     (when (eolp)             :eolp)))
 ```
 
-Above example is added a condition that compare for majar-mode.
-You can call added function name like:
+and this is test command.
 
 ```lisp
 (global-set-key (kbd "C-0")
@@ -71,9 +86,33 @@ You can call added function name like:
                     :default '(message "default func"))))
 ```
 
+Above example is added a condition that compare for majar-mode.
+You can call added function name like:
+
 Note: above element priority of `mykie:conditions` is high than below condition.
 So you can't call :default function if you are selecting region and if
 you set :region's function.
+
+### Add your condition
+There is another way to add your favorite condition.(from v0.0.7)
+For example.
+```lisp
+(setq mykie:before-user-normal-conditions
+      '((when t :this-is-test))
+(mykie:initialize)
+```
+Then you can use :this-is-test keyword argument.
+This way is convenience if you want to add condition without changing
+default conditions.
+
+You can use below variables to add your conditions
+
+    mykie:before-user-region-conditions
+    mykie:after-user-region-conditions
+    mykie:before-user-prefix-arg-conditions
+    mykie:after-user-prefix-arg-conditions
+    mykie:before-user-normal-conditions
+    mykie:after-user-normal-conditions
 
 ## Example
 Below codes are samples for mykie.el
@@ -136,6 +175,17 @@ Also you can utilize M-[0-9] pushing times.
    :M-12    '(minibuffer-message "You pushed M-1 and M-2 aren't you?")
    :region  'query-replace-regexp))
 (global-set-key (kbd "C-o") mykie-pushed-x-times)
+```
+
+Also you can utilize :email and :url keyword.
+And you can use `mykie:current-thing' variable that store thing's variable.
+```lisp
+(defun mykie:sample ()
+  (interactive)
+  (mykie
+   :C-u&url            '(browse-url-at-point)
+   :email              '(message mykie:current-thing)
+   :default            '(message "default")))
 ```
 
 Below mykie:loop function is trial now.
