@@ -328,7 +328,7 @@ Example:
    :default 'self-insert-command
    :region '(message \"%s\" mykie:region-str)
    :C-u '(message \"C-u z\"))"
-  (apply 'mykie:define-key global-map (mykie:format-key key) args))
+  (apply 'mykie:define-key global-map key args))
 (put 'mykie:global-set-key 'lisp-indent-function 1)
 
 (defun mykie:define-key-with-self-key (key &rest args)
