@@ -4,7 +4,7 @@
 
 ;; Author: Yuta Yamada <cokesboy"at"gmail.com>
 ;; URL: https://github.com/yuutayamada/mykie-el
-;; Version: 0.0.7
+;; Version: 0.0.8
 ;; Keywords: Emacs, configuration, keybind
 
 ;;; License:
@@ -354,10 +354,12 @@ Examples:
 
   Set keybinds to specific keymap:
   (mykie:set-keys emacs-lisp-mode-map
-    \"C-1\" :default '(message \"C-1\")
-    \"C-2\" :default '(message \"C-2\")
-    \"C-3\" :default '(message \"C-3\")
-    \"C-4\" :default '(message \"C-4\"))
+    \"C-1\"
+    :default '(message \"C-1\")
+    :C-u     '(message \"C-1+C-u\")
+    \"C-2\"
+    :default '(message \"C-2\")
+    :C-u     '(message \"C-2+C-u\"))
 
   Set keybinds for self-insert-key
   You don't need to specify :default state, it's specified to
