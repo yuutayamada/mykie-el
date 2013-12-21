@@ -311,12 +311,11 @@ Example:
    :default 'self-insert-command
    :region '(message \"%s\" mykie:region-str)
    :C-u '(message \"C-u y\"))"
-  (lexical-let ((key (mykie:format-key key))
-                (args args))
-    (define-key keymap key
-      (lambda ()
-        (interactive)
-        (apply 'mykie args)))))
+  (lexical-let* ((key (mykie:format-key key)) 
+                 (args args)
+                 (sym (intern (concat "mykie:define-key:" (sha1 (format "%S%s" keymap key))))))
+    (fset sym (lambda () (interactive) (apply 'mykie args)))
+    (define-key keymap key sym)))
 (put 'mykie:define-key 'lisp-indent-function 2)
 
 (defun mykie:global-set-key (key &rest args)
