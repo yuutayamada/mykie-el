@@ -34,7 +34,7 @@
 ;; But call query-replace-regexp function if you select region.
 ;;
 ;; In short form:
-;; (mykie:global-set-key (kbd "C-j")
+;; (mykie:global-set-key "C-j" ; You don't need kbd macro
 ;;   :default 'newline-and-indent
 ;;   :region 'query-replace-regexp)
 ;;
@@ -296,6 +296,12 @@ You can use `mykie:region-str' variable that have region's string."
      (when (funcall mykie:region-func-predicate)
        (run-hooks 'mykie:region-after-init-hook)))))
 
+(defun mykie:format-key (key)
+  (typecase key
+    (vector key)
+    (string (kbd key))
+    (t (error "Invalid key"))))
+
 (defun mykie:define-key (keymap key &rest args)
   "In KEYMAP, define key sequence KEY as `mykie' command with ARGS.
 In other words, `mykie' + `define-key'.
@@ -305,7 +311,8 @@ Example:
    :default 'self-insert-command
    :region '(message \"%s\" mykie:region-str)
    :C-u '(message \"C-u y\"))"
-  (lexical-let ((key key) (args args))
+  (lexical-let ((key (mykie:format-key key))
+                (args args))
     (define-key keymap key
       (lambda ()
         (interactive)
@@ -321,7 +328,7 @@ Example:
    :default 'self-insert-command
    :region '(message \"%s\" mykie:region-str)
    :C-u '(message \"C-u z\"))"
-  (apply 'mykie:define-key global-map key args))
+  (apply 'mykie:define-key global-map (mykie:format-key key) args))
 (put 'mykie:global-set-key 'lisp-indent-function 1)
 
 (unless mykie:conditions
