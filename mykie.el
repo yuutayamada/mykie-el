@@ -340,6 +340,63 @@ Example:
          (append args '(:default self-insert-command))))
 (put 'mykie:define-key-with-self-key 'lisp-indent-function 1)
 
+(defun mykie:set-keys (direction &rest args)
+  "Set keybinds as `mykie' command.
+Examples:
+  Set keybinds to global-map:
+  (mykie:set-keys 'global
+    \"C-a\"
+    :default     '(beginning-of-line)
+    :C-u         'mark-whole-buffer
+    \"C-e\"
+    :default     '(end-of-line)
+    :C-u         '(message \"Hello\"))
+
+  Set keybinds to specific keymap:
+  (mykie:set-keys emacs-lisp-mode-map
+    \"C-1\"
+    :default '(message \"C-1\")
+    :C-u     '(message \"C-1+C-u\")
+    \"C-2\"
+    :default '(message \"C-2\")
+    :C-u     '(message \"C-2+C-u\"))
+
+  Set keybinds for self-insert-key
+  You don't need to specify :default state, it's specified to
+  'self-insert-command automatically to it.
+  (mykie:set-keys 'with-self-key
+   \"a\"
+   :C-u '(message \"called a\")
+   :region 'query-replace-regexp
+   \"b\"
+   :C-u '(message \"called b\"))"
+  (lexical-let
+      ((set-keys (lambda (func &optional keymap)
+                   (loop with tmp = '()
+                         with last = (1- (length args))
+                         for i from 0 to last
+                         for next = (1+ i)
+                         for key-or-prop = (nth i args)
+                         collect key-or-prop into tmp
+                         if (or (equal i last)
+                                (typecase (nth next args)
+                                  (string t)
+                                  (vector t)))
+                         do (progn
+                              (if keymap
+                                  (apply func keymap tmp)
+                                (apply func tmp))
+                              (setq tmp nil))))))
+    (case direction
+      (global
+       (funcall set-keys 'mykie:global-set-key))
+      (with-self-key
+       (funcall set-keys 'mykie:define-key-with-self-key))
+      (t (if (keymapp direction)
+             (funcall set-keys 'mykie:define-key direction)
+           (error "Key parse failed, make sure your setting"))))))
+(put 'mykie:set-keys 'lisp-indent-function 1)
+
 (unless mykie:conditions
   (mykie:initialize))
 
