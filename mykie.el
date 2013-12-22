@@ -376,7 +376,7 @@ Example:
   "Set keybinds as `mykie' command.
 Examples:
   Set keybinds to global-map:
-  (mykie:set-keys 'global
+  (mykie:set-keys nil ; You can set 'global or global-map instead of nil too.
     \"C-a\"
     :default     '(beginning-of-line)
     :C-u         'mark-whole-buffer
@@ -405,7 +405,8 @@ Examples:
   `(mykie:set-keys-core
     (when (keymapp ,keymap-or-order)
       (symbol-name ,keymap-or-order))
-    ,keymap-or-order ,@args))
+    (or ,keymap-or-order 'global) ; you can set nil too
+    ,@args))
 
 (defun mykie:set-keys-core (keymap-name order &rest args)
   (lexical-let
