@@ -14,7 +14,10 @@ For example:
 
 ```lisp
   (require 'mykie)
-  (mykie:set-keys 'global
+  ;; You can set 'global or global-map instead of nil to specify global-map.
+  ;; If you want to specify specific keymap then specify the keymap name
+  ;; like emacs-lisp-mode-map instead of nil.
+  (mykie:set-keys nil
     "C-a"
     :default     '(beginning-of-line)
     :C-u         'mark-whole-buffer
