@@ -214,6 +214,12 @@ THEN-FORM and ELSE-FORMS are then excuted just like in `if'."
          (when mykie:current-thing
            thing-state))))))
 
+(defun mykie:get-comment/string-state ()
+  "Return :comment if current point is comment or string face."
+  (when (nth 8 (save-excursion (syntax-ppss
+                                (if (bobp) (point) (1- (point))))))
+    :comment))
+
 (defun mykie:get-major-mode-state (&optional C-u-prefix)
   (when (or (and C-u-prefix
                  current-prefix-arg)
