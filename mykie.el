@@ -315,10 +315,10 @@ Example:
    :region '(message \"%s\" mykie:region-str)
    :C-u '(message \"C-u y\"))"
   (unless (memq keymap mykie:keymaps) (push keymap mykie:keymaps))
-  (lexical-let* ((key (mykie:format-key key)) 
+  (lexical-let* ((key (mykie:format-key key))
                  (args args)
                  ;; Workaround: Assign command name
-                 (sym (intern (format 
+                 (sym (intern (format
                                "mykie:%s:%s:%s"
                                ;; Some programs check command name by
                                ;; (string-match "self-insert-command" command-name)
@@ -327,7 +327,7 @@ Example:
                                ;; find keymap index
                                (loop for k in mykie:keymaps
                                      for i from 0
-                                     if (eq k keymap) 
+                                     if (eq k keymap)
                                      return (- (length mykie:keymaps) i))
                                ;; Use unique string for key(string or vector)
                                (sha1 (format "%S" key))))))
