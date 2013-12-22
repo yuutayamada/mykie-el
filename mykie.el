@@ -372,7 +372,7 @@ Example:
          (append args '(:default self-insert-command))))
 (put 'mykie:define-key-with-self-key 'lisp-indent-function 1)
 
-(defmacro mykie:set-keys (direction &rest args)
+(defmacro mykie:set-keys (order &rest args)
   "Set keybinds as `mykie' command.
 Examples:
   Set keybinds to global-map:
@@ -403,12 +403,11 @@ Examples:
    \"b\"
    :C-u '(message \"called b\"))"
   `(mykie:set-keys-core
-    (when (keymapp ,direction)
-      (symbol-name ,direction))
-    ,direction ,@args))
-(put 'mykie:set-keys 'lisp-indent-function 1)
+    (when (keymapp ,order)
+      (symbol-name ,order))
+    ,order ,@args))
 
-(defun mykie:set-keys-core (keymap-name direction &rest args)
+(defun mykie:set-keys-core (keymap-name order &rest args)
   (lexical-let
       ((set-keys (lambda (func &optional keymap)
                    (loop with tmp = '()
@@ -426,13 +425,13 @@ Examples:
                                   (apply func keymap-name keymap tmp)
                                 (apply func tmp))
                               (setq tmp nil))))))
-    (case direction
+    (case order
       (global
        (funcall set-keys 'mykie:global-set-key))
       (with-self-key
        (funcall set-keys 'mykie:define-key-with-self-key))
-      (t (if (keymapp direction)
-             (funcall set-keys 'mykie:define-key-core direction)
+      (t (if (keymapp order)
+             (funcall set-keys 'mykie:define-key-core order)
            (error "Key parse failed, make sure your setting"))))))
 
 (unless mykie:conditions
