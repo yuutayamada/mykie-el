@@ -372,7 +372,7 @@ Example:
          (append args '(:default self-insert-command))))
 (put 'mykie:define-key-with-self-key 'lisp-indent-function 1)
 
-(defmacro mykie:set-keys (order &rest args)
+(defmacro mykie:set-keys (keymap-or-order &rest args)
   "Set keybinds as `mykie' command.
 Examples:
   Set keybinds to global-map:
@@ -403,9 +403,9 @@ Examples:
    \"b\"
    :C-u '(message \"called b\"))"
   `(mykie:set-keys-core
-    (when (keymapp ,order)
-      (symbol-name ,order))
-    ,order ,@args))
+    (when (keymapp ,keymap-or-order)
+      (symbol-name ,keymap-or-order))
+    ,keymap-or-order ,@args))
 
 (defun mykie:set-keys-core (keymap-name order &rest args)
   (lexical-let
