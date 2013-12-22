@@ -402,13 +402,13 @@ Examples:
    :region 'query-replace-regexp
    \"b\"
    :C-u '(message \"called b\"))"
-  `(mykie:set-keys-core
-    (when (keymapp ,keymap-or-order)
-      (symbol-name ,keymap-or-order))
-    (or ,keymap-or-order 'global) ; you can set nil too
-    ,@args))
+  `(let ((order (or ,keymap-or-order 'global)))
+     (if (keymapp ,keymap-or-order)
+         (mykie:set-keys-core
+          (symbol-name ,keymap-or-order) order ,keymap-or-order ,@args)
+       (mykie:set-keys-core nil order global-map ,@args))))
 
-(defun mykie:set-keys-core (keymap-name order &rest args)
+(defun mykie:set-keys-core (keymap-name order keymap &rest args)
   (lexical-let
       ((set-keys (lambda (func &optional keymap)
                    (loop with tmp = '()
@@ -431,9 +431,7 @@ Examples:
        (funcall set-keys 'mykie:global-set-key))
       (with-self-key
        (funcall set-keys 'mykie:define-key-with-self-key))
-      (t (if (keymapp order)
-             (funcall set-keys 'mykie:define-key-core order)
-           (error "Key parse failed, make sure your setting"))))))
+      (t (funcall set-keys 'mykie:define-key-core keymap)))))
 
 (unless mykie:conditions
   (mykie:initialize))
