@@ -356,7 +356,7 @@ Example:
          (append args '(:default self-insert-command))))
 (put 'mykie:define-key-with-self-key 'lisp-indent-function 1)
 
-(defun mykie:set-keys (direction &rest args)
+(defmacro mykie:set-keys (direction &rest args)
   "Set keybinds as `mykie' command.
 Examples:
   Set keybinds to global-map:
@@ -386,6 +386,13 @@ Examples:
    :region 'query-replace-regexp
    \"b\"
    :C-u '(message \"called b\"))"
+  `(mykie:set-keys-core
+    (when (keymapp ,direction)
+      (symbol-name ,direction))
+    ,direction ,@args))
+(put 'mykie:set-keys 'lisp-indent-function 1)
+
+(defun mykie:set-keys-core (keymap-name direction &rest args)
   (lexical-let
       ((set-keys (lambda (func &optional keymap)
                    (loop with tmp = '()
@@ -400,7 +407,7 @@ Examples:
                                   (vector t)))
                          do (progn
                               (if keymap
-                                  (apply func keymap tmp)
+                                  (apply func keymap-name keymap tmp)
                                 (apply func tmp))
                               (setq tmp nil))))))
     (case direction
@@ -409,9 +416,8 @@ Examples:
       (with-self-key
        (funcall set-keys 'mykie:define-key-with-self-key))
       (t (if (keymapp direction)
-             (funcall set-keys 'mykie:define-key direction)
+             (funcall set-keys 'mykie:define-key-core direction)
            (error "Key parse failed, make sure your setting"))))))
-(put 'mykie:set-keys 'lisp-indent-function 1)
 
 (unless mykie:conditions
   (mykie:initialize))
