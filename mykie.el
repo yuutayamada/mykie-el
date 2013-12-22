@@ -113,6 +113,22 @@ this behavior by this variable.")
      (and (region-active-p)
           (case mykie:current-state ((:region :region&C-u) t)))))
 
+(defvar mykie:make-funcname-function
+  (lambda (args mykie:keymaps keymap key &optional keymap-name)
+    (intern (format
+             "mykie:%s:%s:%s:%s"
+             (or keymap-name "")
+             (key-description key)
+             ;; Some programs check command name by
+             ;; (string-match "self-insert-command" command-name)
+             (if (eq (plist-get args :default) 'self-insert-command)
+                 "self-insert-command" "key")
+             ;; find keymap index
+             (loop for k in mykie:keymaps
+                   for i from 0
+                   if (eq k keymap)
+                   return (- (length mykie:keymaps) i))))))
+
 ;; INTERNAL VARIABLES
 (defvar mykie:keymaps nil)
 
@@ -305,7 +321,7 @@ You can use `mykie:region-str' variable that have region's string."
     (string (kbd key))
     (t (error "Invalid key"))))
 
-(defun mykie:define-key (keymap key &rest args)
+(defmacro mykie:define-key (keymap key &rest args)
   "In KEYMAP, define key sequence KEY as `mykie' command with ARGS.
 In other words, `mykie' + `define-key'.
 
@@ -314,26 +330,20 @@ Example:
    :default 'self-insert-command
    :region '(message \"%s\" mykie:region-str)
    :C-u '(message \"C-u y\"))"
+  `(mykie:define-key-core
+    (symbol-name (quote ,keymap))
+    ,keymap ,key ,@args))
+(put 'mykie:define-key 'lisp-indent-function 2)
+
+(defun mykie:define-key-core (keymap-name keymap key &rest args)
   (unless (memq keymap mykie:keymaps) (push keymap mykie:keymaps))
   (lexical-let* ((key (mykie:format-key key))
                  (args args)
                  ;; Workaround: Assign command name
-                 (sym (intern (format
-                               "mykie:%s:%s:%s"
-                               ;; Some programs check command name by
-                               ;; (string-match "self-insert-command" command-name)
-                               (if (eq (plist-get args :default) 'self-insert-command)
-                                   "self-insert-command" "key")
-                               ;; find keymap index
-                               (loop for k in mykie:keymaps
-                                     for i from 0
-                                     if (eq k keymap)
-                                     return (- (length mykie:keymaps) i))
-                               ;; Use unique string for key(string or vector)
-                               (sha1 (format "%S" key))))))
+                 (sym (funcall mykie:make-funcname-function
+                               args mykie:keymaps keymap key keymap-name)))
     (fset sym (lambda () (interactive) (apply 'mykie args)))
     (define-key keymap key sym)))
-(put 'mykie:define-key 'lisp-indent-function 2)
 
 (defun mykie:global-set-key (key &rest args)
   "Give KEY a global binding as `mykie' command.
@@ -344,7 +354,7 @@ Example:
    :default 'self-insert-command
    :region '(message \"%s\" mykie:region-str)
    :C-u '(message \"C-u z\"))"
-  (apply 'mykie:define-key global-map key args))
+  (apply 'mykie:define-key-core "global-map" global-map key args))
 (put 'mykie:global-set-key 'lisp-indent-function 1)
 
 (defun mykie:define-key-with-self-key (key &rest args)
@@ -352,7 +362,7 @@ Example:
 Example:
   (mykie:define-key-with-self-key
       \"a\" :C-u '(message \"I am C-u\"))"
-  (apply 'mykie:define-key global-map (mykie:format-key key)
+  (apply 'mykie:define-key-core "global-map" global-map (mykie:format-key key)
          (append args '(:default self-insert-command))))
 (put 'mykie:define-key-with-self-key 'lisp-indent-function 1)
 
