@@ -445,21 +445,21 @@ Examples:
 (defun mykie:set-keys-core (keymap-name order keymap &rest args)
   (lexical-let
       ((set-keys (lambda (func &optional keymap)
-                   (loop with tmp = '()
+                   (loop with key-and-prop = '()
                          with last = (1- (length args))
                          for i from 0 to last
                          for next = (1+ i)
                          for key-or-prop = (nth i args)
-                         collect key-or-prop into tmp
+                         collect key-or-prop into key-and-prop
                          if (or (equal i last)
                                 (typecase (nth next args)
                                   (string t)
                                   (vector t)))
                          do (progn
                               (if keymap
-                                  (apply func keymap-name keymap tmp)
-                                (apply func tmp))
-                              (setq tmp nil))))))
+                                  (apply func keymap-name keymap key-and-prop)
+                                (apply func key-and-prop))
+                              (setq key-and-prop nil))))))
     (case order
       (global
        (funcall set-keys 'mykie:global-set-key))
