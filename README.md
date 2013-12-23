@@ -234,6 +234,7 @@ For example:
 ```
 
 Also you can utilize M-[0-9] pushing times.
+
 ```lisp
 (mykie:global-set-key "C-0"
    :default '(message "default func")
@@ -241,9 +242,12 @@ Also you can utilize M-[0-9] pushing times.
    :M-1     '(message "You pushed M-1 aren't you?")
    :M-2     '(message "You pushed M-2 aren't you?")
    :M-3     '(message "You pushed M-3 aren't you?")
-   :M-12    '(message "You pushed M-1 and M-2 aren't you?")
+   :M-12    '(message "You might pushed M-1 and M-2 aren't you?")
    :region  'query-replace-regexp)
 ```
+
+As you may know, you can do commands
+[M-1 M-2 C-0], [M-1 2 C-0], or [C-u 1 2 C-0] to call :M-12's function.
 
 Also you can utilize :email and :url keyword.
 And you can use `mykie:current-thing' variable that store thing's variable.
