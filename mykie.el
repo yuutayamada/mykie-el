@@ -199,13 +199,8 @@ THEN-FORM and ELSE-FORMS are then excuted just like in `if'."
 
 (defun* mykie:get-thing-state (thing &key prefix)
   (lexical-let
-      ((thing-state (intern (concat ":" prefix (symbol-name thing)))))
-    (when (and (plist-get mykie:current-args thing-state)
-               (or (not prefix)
-                   (and prefix (equal "C-u&"    prefix)
-                        current-prefix-arg)
-                   (and prefix (equal "region&" prefix)
-                        (region-active-p))))
+      ((thing-state (mykie:concat-prefix-if-exist thing prefix)))
+    (when thing-state
       (case thing
         ((url email)
          (mykie:aif (thing-at-point thing)
@@ -213,6 +208,17 @@ THEN-FORM and ELSE-FORMS are then excuted just like in `if'."
                     (setq mykie:current-thing nil))
          (when mykie:current-thing
            thing-state))))))
+
+(defun mykie:concat-prefix-if-exist (state prefix)
+  (lexical-let
+      ((target-state (intern (concat ":" prefix (symbol-name state)))))
+    (when (and (plist-get mykie:current-args target-state)
+               (or (not prefix)
+                   (and prefix (equal "C-u&"    prefix)
+                        current-prefix-arg)
+                   (and prefix (equal "region&" prefix)
+                        (region-active-p))))
+      target-state)))
 
 (defun mykie:get-comment/string-state ()
   "Return :comment if current point is comment or string face."
