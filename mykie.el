@@ -47,6 +47,7 @@
   '((when (region-active-p)
       (or (and current-prefix-arg
                :region&C-u)
+          (mykie:get-major-mode-state "region&")
           :region))))
 
 (defvar mykie:prefix-arg-conditions
