@@ -283,6 +283,18 @@ If `active'(▼) mode then return :skk-active."
       (active :skk-active)
       (on     :skk-on))))
 
+(defun mykie:ignore-mode-p ()
+  "Return non-nil if matched specified modes.
+If you specified :ignore-major-modes with major-mode's list to mykie's args,
+then check whether major-mode list match current major-mode.
+If you specified :ignore-minor-modes with minor-mode's list to mykie's args,
+then check whether minor-mode list match current `minor-mode-list'."
+  (or (member major-mode
+              (plist-get mykie:current-args :ignore-major-modes))
+      (loop for mode in (plist-get mykie:current-args :ignore-minor-modes)
+            if (member mode minor-mode-list)
+            do (return t))))
+
 (defun mykie:init (args)
   "Initialize mykie's global-variable before do mykie's command."
   (when (plist-get args :use-C-u-num)
