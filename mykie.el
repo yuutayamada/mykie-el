@@ -111,6 +111,14 @@ this behavior by this variable.")
          mykie:normal-conditions
          mykie:after-user-normal-conditions)))
 
+(defvar mykie:ignore-major-modes-for-self-insert-key '()
+  "major-mode's list that ignore mykie's function if this list
+contains current major-mode")
+
+(defvar mykie:ignore-minor-modes-for-self-insert-key '()
+  "minor-mode's list that ignore mykie's function if this list
+contains current minor-mode")
+
 (defvar mykie:region-before-init-hook '(mykie:region-init))
 (defvar mykie:region-after-init-hook  '(mykie:deactivate-mark))
 
@@ -421,7 +429,14 @@ Example:
   (mykie:define-key-with-self-key
       \"a\" :C-u '(message \"I am C-u\"))"
   (apply 'mykie:define-key-core "global-map" global-map (mykie:format-key key)
-         (append args '(:default self-insert-command))))
+         (append args
+                 '(:default self-insert-command)
+                 (mykie:aif mykie:ignore-major-modes-for-self-insert-key
+                            `(:ignore-major-modes ,it)
+                            nil)
+                 (mykie:aif mykie:ignore-minor-modes-for-self-insert-key
+                            `(:ignore-minor-modes ,it)
+                     nil))))
 (put 'mykie:define-key-with-self-key 'lisp-indent-function 1)
 
 (defmacro mykie:set-keys (keymap-or-order &rest args)
