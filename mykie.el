@@ -132,7 +132,9 @@ contains current minor-mode")
     (intern (format
              "mykie:%s:%s:%s:%s"
              (or keymap-name "")
-             (key-description key)
+             (replace-regexp-in-string
+              " " "_"
+              (key-description key))
              ;; Some programs check command name by
              ;; (string-match "self-insert-command" command-name)
              (if (eq (plist-get args :default) 'self-insert-command)
