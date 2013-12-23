@@ -349,7 +349,9 @@ If you set 'region&C-u then deactivate region when you pushed C-u.
 If you set t then deactivate region in both cases.
 You can use `mykie:region-str' variable that have region's string."
   (mykie:init args)
-  (loop for condition in mykie:conditions
+  (loop initially (when (mykie:ignore-mode-p)
+                    (return (mykie:execute (plist-get args :default))))
+        for condition in mykie:conditions
         for state = (eval condition)
         for func  = (plist-get args state)
         if (member state args) do
