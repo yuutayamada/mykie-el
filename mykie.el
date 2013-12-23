@@ -407,6 +407,7 @@ Examples:
          (mykie:set-keys-core
           (symbol-name ,keymap-or-order) order ,keymap-or-order ,@args)
        (mykie:set-keys-core nil order global-map ,@args))))
+(put 'mykie:set-keys 'lisp-indent-function 1)
 
 (defun mykie:set-keys-core (keymap-name order keymap &rest args)
   (lexical-let
