@@ -50,7 +50,7 @@
           :region))))
 
 (defvar mykie:prefix-arg-conditions
-  '((mykie:get-major-mode-state t)
+  '((mykie:get-major-mode-state "C-u&")
     (mykie:get-thing-state 'email :prefix "C-u&")
     (mykie:get-thing-state 'url   :prefix "C-u&")
     (when current-prefix-arg
@@ -226,14 +226,8 @@ THEN-FORM and ELSE-FORMS are then excuted just like in `if'."
                                 (if (bobp) (point) (1- (point))))))
     :comment))
 
-(defun mykie:get-major-mode-state (&optional C-u-prefix)
-  (when (or (and C-u-prefix
-                 current-prefix-arg)
-            (and (not C-u-prefix)
-                 (null current-prefix-arg)))
-    (lexical-let
-        ((prefix (if C-u-prefix ":C-u&" ":")))
-      (intern (concat prefix (symbol-name major-mode))))))
+(defun mykie:get-major-mode-state (&optional prefix)
+  (mykie:concat-prefix-if-exist major-mode prefix))
 
 (defun mykie:get-prefix-arg-state ()
   "Return keyword like :C-u, :C-*N or :M-N.
