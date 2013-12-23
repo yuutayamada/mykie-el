@@ -77,7 +77,8 @@
     (when (bobp)             :bobp)
     (when (eobp)             :eobp)
     (when (bolp)             :bolp)
-    (when (eolp)             :eolp)))
+    (when (eolp)             :eolp)
+    (when buffer-read-only   :readonly)))
 
 (defvar mykie:before-user-region-conditions '())
 (defvar mykie:after-user-region-conditions '())
