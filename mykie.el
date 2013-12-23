@@ -186,6 +186,8 @@ Example
   (equal this-command last-command))
 
 (defun mykie:get-C-u-times ()
+  "Return times that your pushed C-u's times. And you can use mykie:C-u-num
+variable to get the times after do this function if you want."
   (setq mykie:C-u-num (truncate (log (or (car current-prefix-arg) 1) 4)))
   mykie:C-u-num)
 
@@ -198,6 +200,19 @@ THEN-FORM and ELSE-FORMS are then excuted just like in `if'."
      (if it ,then-form ,@else-forms)))
 
 (defun* mykie:get-thing-state (thing &key prefix)
+  "Return :email, :url state.
+The THING is you can specify 'email or 'url.
+If the THING is 'email then check whether thing-at-point is email.
+Then if there is email, return :email.
+If the THING is 'url then check whether thing-at-point is url.
+Then if there is url, return :url.
+Also you can specify \"C-u&\" or \"region&\" to PREFIX.
+If you specify \"C-u&\", check whether there is current-prefix-arg.
+If you specify \"region&\", check whether region is active.
+If Result is true, then return prefix + thing state such as
+:C-u&url(if you specify \"&C-u\" to PREFIX in this case).
+You can use `mykie:current-thing' variable to get
+result(i.e., email address or url) after call this function."
   (lexical-let
       ((thing-state (mykie:concat-prefix-if-exist thing prefix)))
     (when thing-state
@@ -227,6 +242,12 @@ THEN-FORM and ELSE-FORMS are then excuted just like in `if'."
     :comment))
 
 (defun mykie:get-major-mode-state (&optional prefix)
+  "Return :major-mode, :C-u&major-mode or :region&major-mode if
+you specified same state name to `mykie's args and matched
+condition if you specified prefix(whether current-prefix-arg or region
+active).
+The major-mode replaced to `major-mode' name.
+You can specify \"C-u&\" or \"region&\" to the PREFIX."
   (mykie:concat-prefix-if-exist major-mode prefix))
 
 (defun mykie:get-prefix-arg-state ()
@@ -248,17 +269,26 @@ call `mykie' function."
 (defalias 'mykie:get-C-u-keyword 'mykie:get-prefix-arg-state)
 
 (defun mykie:get-skk-state ()
+  "Return SKK(simple kana kanji)'s state.
+If `on'(▽) mode then return :skk-on.
+If `active'(▼) mode then return :skk-active."
   (when (bound-and-true-p skk-mode)
     (case (bound-and-true-p skk-henkan-mode)
       (active :skk-active)
       (on     :skk-on))))
 
 (defun mykie:init (args)
+  "Initialize mykie's global-variable before do mykie's command."
   (when (plist-get args :use-C-u-num)
     (mykie:get-C-u-times))
   (setq mykie:current-args args))
 
 (defun mykie:region-init ()
+  "Initialize mykie's global-variable for region.
+You can use `mykie:region-str' variable that store region string.
+If you specified 'kill or 'copy with :region-handle-flag of mykie's args,
+then do `kill-region' or `copy-region-as-kill' before do mykie's command.
+So you can use kill-ring variable that store region's variable if you want."
   (setq mykie:region-str
         (buffer-substring (region-beginning) (region-end)))
   (case (plist-get mykie:current-args :region-handle-flag)
@@ -266,6 +296,8 @@ call `mykie' function."
     (copy (copy-region-as-kill (region-beginning) (region-end)))))
 
 (defun mykie:deactivate-mark ()
+  "Deactivate region if you specified :deactivate-region of mykie's
+args with non-nil after do mykie's command."
   (lexical-let
       ((deactivation
         (plist-get mykie:current-args :deactivate-region)))
