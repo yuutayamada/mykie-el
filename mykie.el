@@ -52,10 +52,12 @@
       (or (and current-prefix-arg
                :region&C-u)
           (mykie:get-major-mode-state "region&")
+          (mykie:get-prog-mode-state "region&")
           :region))))
 
 (defvar mykie:prefix-arg-conditions
   '((mykie:get-major-mode-state "C-u&")
+    (mykie:get-prog-mode-state "C-u&")
     (mykie:get-thing-state 'email :prefix "C-u&")
     (mykie:get-thing-state 'url   :prefix "C-u&")
     (when current-prefix-arg
@@ -71,6 +73,7 @@
 (defvar mykie:normal-conditions
   '((when (mykie:repeat-p)   :repeat)
     (mykie:get-major-mode-state)
+    (mykie:get-prog-mode-state)
     (mykie:get-thing-state   'email)
     (mykie:get-thing-state   'url)
     (when (minibufferp)      :minibuff)
@@ -153,6 +156,12 @@ contains current minor-mode")
 (defvar mykie:current-thing nil)
 (defvar mykie:region-str "")
 (defvar mykie:C-u-num nil)
+
+(defvar-local mykie:prog-mode-flag nil
+  "Buffer local variable, t means this buffer is related programing mode.
+Otherwise nil.")
+(add-hook 'prog-mode-hook
+          '(lambda () (setq-local mykie:prog-mode-flag t)))
 
 (defun mykie:loop (&rest keybinds)
   (lexical-let*
@@ -281,6 +290,14 @@ call `mykie' function."
 
 ;; Backward compatibility
 (defalias 'mykie:get-C-u-keyword 'mykie:get-prefix-arg-state)
+
+(defun mykie:get-prog-mode-state (&optional prefix)
+  "Return :prog, :C-u&prog or :region&prog state if current buffer is
+buffer that related programming. You can specify \"C-u&\" or
+\"region&\" to PREFIX. You can use this function from Emacs 24.
+Because this function utilize `prog-mode-hook'."
+  (when mykie:prog-mode-flag
+    (mykie:concat-prefix-if-exist 'prog prefix)))
 
 (defun mykie:get-skk-state ()
   "Return SKK(simple kana kanji)'s state.
