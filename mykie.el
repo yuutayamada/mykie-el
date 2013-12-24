@@ -147,8 +147,6 @@ contains current minor-mode")
 
 ;; INTERNAL VARIABLES
 (defvar mykie:keymaps nil)
-
-;; DYNAMIC VARIABLES
 (defvar mykie:current-state nil)
 (defvar mykie:current-args '())
 (defvar mykie:current-point "")
