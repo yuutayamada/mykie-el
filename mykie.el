@@ -425,7 +425,7 @@ Example:
 (defun mykie:define-key-core (keymap-name keymap key &rest args)
   (unless (memq keymap mykie:keymaps) (push keymap mykie:keymaps))
   (lexical-let* ((key (mykie:format-key key))
-                 (args args)
+                 (args (append args `(:key-info (,key . ,keymap-name))))
                  ;; Workaround: Assign command name
                  (sym (funcall mykie:make-funcname-function
                                args mykie:keymaps keymap key keymap-name)))
