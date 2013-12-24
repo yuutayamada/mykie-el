@@ -317,6 +317,13 @@ If `active'(▼) mode then return :skk-active."
       (active :skk-active)
       (on     :skk-on))))
 
+(defun mykie:major-mode-key-exist-p (args)
+  "Return function symbol if same key as the major-mode's key exists."
+  (destructuring-bind (key . keymap) (plist-get args :key-info)
+    (lookup-key
+     (eval (intern (concat (symbol-name major-mode) "-map")))
+     (kbd key))))
+
 (defun mykie:ignore-mode-p ()
   "Return non-nil if matched specified modes.
 If you specified :ignore-major-modes with major-mode's list to mykie's args,
