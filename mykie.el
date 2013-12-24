@@ -324,7 +324,13 @@ then check whether minor-mode list match current `minor-mode-list'."
   "Initialize mykie's global-variable before do mykie's command."
   (when (plist-get args :use-C-u-num)
     (mykie:get-C-u-times))
-  (setq mykie:current-args args))
+  (setq mykie:current-args args)
+  (lexical-let
+      ((fallback (and (mykie:ignore-mode-p)
+                      (plist-get args :default))))
+    (when fallback
+      (mykie:execute fallback)
+      'exit)))
 
 (defun mykie:region-init ()
   "Initialize mykie's global-variable for region.
@@ -373,9 +379,7 @@ If you set 'region then deactivate region when you did not push C-u.
 If you set 'region&C-u then deactivate region when you pushed C-u.
 If you set t then deactivate region in both cases.
 You can use `mykie:region-str' variable that have region's string."
-  (mykie:init args)
-  (loop initially (when (mykie:ignore-mode-p)
-                    (return (mykie:execute (plist-get args :default))))
+  (loop initially (when (eq 'exit (mykie:init args)) (return))
         for condition in mykie:conditions
         for state = (eval condition)
         for func  = (plist-get args state)
