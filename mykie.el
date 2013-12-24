@@ -148,6 +148,13 @@ contains current minor-mode")
                    if (eq k keymap)
                    return (- (length mykie:keymaps) i))))))
 
+(defvar mykie:get-fallback-function
+  (lambda (args)
+    (and (mykie:ignore-mode-p)
+         ;; Return default function
+         (plist-get args :default)))
+  "Fallback function that retiring fallback function's symbol.")
+
 ;; INTERNAL VARIABLES
 (defvar mykie:keymaps nil)
 (defvar mykie:current-state nil)
@@ -328,8 +335,7 @@ then check whether minor-mode list match current `minor-mode-list'."
     (mykie:get-C-u-times))
   (setq mykie:current-args args)
   (lexical-let
-      ((fallback (and (mykie:ignore-mode-p)
-                      (plist-get args :default))))
+      ((fallback (funcall mykie:get-fallback-function args)))
     (when fallback
       (mykie:execute fallback)
       'exit)))
