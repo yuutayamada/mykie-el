@@ -192,6 +192,7 @@ Example
   \"m\" 'newline
   \"g\" '(if current-prefix-arg
              (keyboard-quit)))"
+  (mykie:run-hook 'before)
   (run-hooks 'pre-command-hook)
   (cond
    ((commandp func)
@@ -203,7 +204,8 @@ Example
     (funcall func))
    ((listp func)
     (funcall 'eval `(progn ,func))))
-  (run-hooks 'post-command-hook))
+  (run-hooks 'post-command-hook)
+  (mykie:run-hook 'after))
 
 (defun mykie:repeat-p ()
   (equal this-command last-command))
@@ -385,9 +387,7 @@ You can use `mykie:region-str' variable that have region's string."
         for func  = (plist-get args state)
         if (member state args) do
         (setq mykie:current-state state)
-        (mykie:run-hook 'before)
         (mykie:execute func)
-        (mykie:run-hook 'after)
         (return)
         finally (mykie:execute (plist-get args :default)))
   (unless (mykie:repeat-p)
