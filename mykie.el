@@ -506,7 +506,11 @@ Examples:
   `(let ((order (or ,keymap-or-order 'global)))
      (if (keymapp ,keymap-or-order)
          (mykie:set-keys-core
-          (symbol-name ,keymap-or-order) order ,keymap-or-order ,@args)
+          ;; Avoid error for mode specification
+          (condition-case err
+              (symbol-name ,keymap-or-order)
+            (error err))
+          order ,keymap-or-order ,@args)
        (mykie:set-keys-core nil order global-map ,@args))))
 (put 'mykie:set-keys 'lisp-indent-function 1)
 
