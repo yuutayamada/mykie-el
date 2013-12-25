@@ -533,20 +533,16 @@ Examples:
    :C-u '(message \"called b\"))"
   `(let ((order (or ,keymap-or-order 'global)))
      (if (keymapp ,keymap-or-order)
-         (mykie:set-keys-core
-          ;; Avoid error for mode specification
-          (condition-case err
-              (symbol-name ,keymap-or-order)
-            (error err))
-          order ,keymap-or-order ,@args)
-       (mykie:set-keys-core nil order global-map ,@args))))
+         (mykie:set-keys-core order ,keymap-or-order ,@args)
+       (mykie:set-keys-core order global-map ,@args))))
 (put 'mykie:set-keys 'lisp-indent-function 1)
 
-(defun mykie:set-keys-core (keymap-name order keymap &rest args)
+(defun mykie:set-keys-core (order keymap &rest args)
   (lexical-let
-      ((set-keys (lambda (func &optional keymap)
+      ((set-keys (lambda (func)
                    (loop with key-and-prop = '()
                          with last = (1- (length args))
+                         with keymap-name = (quote keymap)
                          for i from 0 to last
                          for next = (1+ i)
                          for key-or-prop = (nth i args)
@@ -557,16 +553,17 @@ Examples:
                                        (string t)
                                        (vector t))))
                          do (progn
-                              (if keymap
-                                  (apply func keymap-name keymap key-and-prop)
-                                (apply func key-and-prop))
+                              (case func
+                                (mykie:define-key-core
+                                 (apply func keymap-name keymap key-and-prop))
+                                (t (apply func key-and-prop)))
                               (setq key-and-prop nil))))))
     (case order
       (global
        (funcall set-keys 'mykie:global-set-key))
       (with-self-key
        (funcall set-keys 'mykie:define-key-with-self-key))
-      (t (funcall set-keys 'mykie:define-key-core keymap)))))
+      (t (funcall set-keys 'mykie:define-key-core)))))
 
 (unless mykie:conditions
   (mykie:initialize))
