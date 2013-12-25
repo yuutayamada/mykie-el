@@ -444,7 +444,34 @@ Example:
                  (sym (funcall mykie:make-funcname-function
                                args mykie:keymaps keymap key keymap-name)))
     (fset sym (lambda () (interactive) (apply 'mykie args)))
-    (define-key keymap key sym)))
+    (define-key keymap key sym)
+    (mykie:aif (plist-get args :clone)
+        (mykie:clone-key it args '(:default self-insert-command)))))
+
+(defun mykie:clone-key (key args default-keyword-and-func)
+  (lexical-let
+      ((new-args
+        (mykie:filter (mykie:replace-property args default-keyword-and-func)
+                      :clone)))
+    (apply 'mykie:define-key-core
+           "global-map" global-map key new-args)))
+
+(defun mykie:replace-property (args key-and-property)
+  (append (mykie:filter args (car key-and-property))
+          key-and-property))
+
+(defun mykie:filter (args keyword)
+  "Delete KEYWORD and the KEYWORD's function or property."
+  (if (not (member keyword args))
+      args
+    (loop with last = (1- (length args))
+          with result = '()
+          with ignore = nil
+          for i from 0 to last
+          if (eq keyword (nth i args))
+          do (push (1+ i) ignore)
+          else if (not (member i ignore))
+          collect (nth i args))))
 
 (defun mykie:global-set-key (key &rest args)
   "Give KEY a global binding as `mykie' command.
@@ -525,9 +552,10 @@ Examples:
                          for key-or-prop = (nth i args)
                          collect key-or-prop into key-and-prop
                          if (or (equal i last)
-                                (typecase (nth next args)
-                                  (string t)
-                                  (vector t)))
+                                (and (not (eq :clone (nth i args)))
+                                     (typecase (nth next args)
+                                       (string t)
+                                       (vector t))))
                          do (progn
                               (if keymap
                                   (apply func keymap-name keymap key-and-prop)
