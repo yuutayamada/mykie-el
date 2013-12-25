@@ -230,6 +230,7 @@ variable to get the times after do this function if you want."
 THEN-FORM and ELSE-FORMS are then excuted just like in `if'."
   `(let ((it ,test-form))
      (if it ,then-form ,@else-forms)))
+(put 'mykie:aif 'lisp-indent-function 2)
 
 (defun* mykie:get-thing-state (thing &key prefix)
   "Return :email, :url state.
@@ -251,8 +252,8 @@ result(i.e., email address or url) after call this function."
       (case thing
         ((url email)
          (mykie:aif (thing-at-point thing)
-                    (setq mykie:current-thing it)
-                    (setq mykie:current-thing nil))
+             (setq mykie:current-thing it)
+           (setq mykie:current-thing nil))
          (when mykie:current-thing
            thing-state))))))
 
@@ -466,11 +467,11 @@ Example:
          (append args
                  '(:default self-insert-command)
                  (mykie:aif mykie:ignore-major-modes-for-self-insert-key
-                            `(:ignore-major-modes ,it)
-                            nil)
+                     `(:ignore-major-modes ,it)
+                   nil)
                  (mykie:aif mykie:ignore-minor-modes-for-self-insert-key
-                            `(:ignore-minor-modes ,it)
-                     nil))))
+                     `(:ignore-minor-modes ,it)
+                   nil))))
 (put 'mykie:define-key-with-self-key 'lisp-indent-function 1)
 
 (defmacro mykie:set-keys (keymap-or-order &rest args)
