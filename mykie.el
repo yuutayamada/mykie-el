@@ -148,6 +148,10 @@ contains current minor-mode")
 (defvar mykie:current-thing nil)
 (defvar mykie:region-str "")
 (defvar mykie:C-u-num nil)
+(defvar mykie:self-insert-keys '()
+  "This variable will store self-insert-key's key and mykie's args pair list.
+To use this variable, you need to use function `mykie:define-key-with-self-key'
+or `mykie:set-keys' with 'with-self-key argument.")
 
 (defvar-local mykie:prog-mode-flag nil
   "Buffer local variable, t means this buffer is related programing mode.
@@ -198,6 +202,25 @@ Example
     (funcall 'eval `(progn ,func))))
   (run-hooks 'post-command-hook)
   (mykie:run-hook 'after))
+
+(defun mykie:attach-mykie-func-to (&optional mode)
+  "Note this function is in development.
+Attach mykie's functions to the MODE's same key function without :default.
+Use the MODE's function as :default function.
+If you aren't specified the MODE, then use current major-mode by default.
+The MODE is mode name's symbol such as 'emacs-lisp-mode."
+  (condition-case err
+      (loop with mode        = (or mode major-mode)
+            with keymap-name = (concat (symbol-name mode) "-map")
+            with keymap      = (eval (intern keymap-name))
+            for (key args) in mykie:self-insert-keys
+            for mode-func = (lookup-key keymap key)
+            if (and (keymapp keymap)
+                    (functionp mode-func)
+                    (not (string-match "^mykie:" (symbol-name mode-func))))
+            do (mykie:clone-key
+                key args `(:default ,mode-func) `(,keymap-name . ,keymap)))
+    (error err)))
 
 (defun mykie:repeat-p ()
   (equal this-command last-command))
@@ -449,13 +472,14 @@ Example:
     (mykie:aif (plist-get args :clone)
         (mykie:clone-key it args '(:default self-insert-command)))))
 
-(defun mykie:clone-key (key args default-keyword-and-func)
+(defun mykie:clone-key (key args default-keyword-and-func &optional keymap-info)
   (lexical-let
       ((new-args
         (mykie:filter (mykie:replace-property args default-keyword-and-func)
-                      :clone)))
-    (apply 'mykie:define-key-core
-           "global-map" global-map key new-args)))
+                      :clone))
+       (map-name (or (car keymap-info) "global-map"))
+       (map      (or (cdr keymap-info)  global-map)))
+    (apply 'mykie:define-key-core map-name map key new-args)))
 
 (defun mykie:replace-property (args key-and-property)
   (append (mykie:filter args (car key-and-property))
@@ -491,6 +515,7 @@ Example:
 Example:
   (mykie:define-key-with-self-key
       \"a\" :C-u '(message \"I am C-u\"))"
+  (add-to-list 'mykie:self-insert-keys `(,key ,args))
   (apply 'mykie:define-key-core "global-map" global-map (mykie:format-key key)
          (append args
                  '(:default self-insert-command)
