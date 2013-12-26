@@ -98,21 +98,6 @@ Note: Order is important. Above list element have more priority than
 below elements. If you dislike :repeat's priority, then you can change
 this behavior by this variable.")
 
-(defun mykie:initialize ()
-  (setq mykie:conditions
-        (append
-         ;; REGION
-         mykie:before-user-region-conditions
-         mykie:region-conditions
-         mykie:after-user-region-conditions
-         ;; PREFIX-ARGUMENT
-         mykie:before-user-prefix-arg-conditions
-         mykie:prefix-arg-conditions
-         mykie:after-user-prefix-arg-conditions
-         ;; NORMAL
-         mykie:before-user-normal-conditions
-         mykie:normal-conditions
-         mykie:after-user-normal-conditions)))
 
 (defvar mykie:ignore-major-modes-for-self-insert-key '()
   "major-mode's list that ignore mykie's function if this list
@@ -336,6 +321,22 @@ then check whether minor-mode list match current `minor-mode-list'."
       (loop for mode in (plist-get mykie:current-args :ignore-minor-modes)
             if (member mode minor-mode-list)
             do (return t))))
+
+(defun mykie:initialize ()
+  (setq mykie:conditions
+        (append
+         ;; REGION
+         mykie:before-user-region-conditions
+         mykie:region-conditions
+         mykie:after-user-region-conditions
+         ;; PREFIX-ARGUMENT
+         mykie:before-user-prefix-arg-conditions
+         mykie:prefix-arg-conditions
+         mykie:after-user-prefix-arg-conditions
+         ;; NORMAL
+         mykie:before-user-normal-conditions
+         mykie:normal-conditions
+         mykie:after-user-normal-conditions)))
 
 (defun mykie:init (args)
   "Initialize mykie's global-variable before do mykie's command."
