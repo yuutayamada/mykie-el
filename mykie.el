@@ -159,6 +159,9 @@ contains current minor-mode")
 To use this variable, you need to use function `mykie:define-key-with-self-key'
 or `mykie:set-keys' with 'with-self-key argument.")
 
+(defvar mykie:attached-mode-list '()
+  "list that `mykie:attach-mykie-func-to' function attached mode name list.")
+
 (defvar-local mykie:prog-mode-flag nil
   "Buffer local variable, t means this buffer is related programing mode.
 Otherwise nil.")
@@ -221,11 +224,14 @@ The MODE is mode name's symbol such as 'emacs-lisp-mode."
             with keymap      = (eval (intern keymap-name))
             for (key args) in mykie:self-insert-keys
             for mode-func = (lookup-key keymap key)
+            if (member mode mykie:attached-mode-list)
+            do (error "Mykie: already attached")
             if (and (keymapp keymap)
                     (functionp mode-func)
                     (not (string-match "^mykie:" (symbol-name mode-func))))
             do (mykie:clone-key
-                key args `(:default ,mode-func) `(,keymap-name . ,keymap)))
+                key args `(:default ,mode-func) `(,keymap-name . ,keymap))
+            finally (add-to-list 'mykie:attached-mode-list mode))
     (error err)))
 
 (defun mykie:repeat-p ()
