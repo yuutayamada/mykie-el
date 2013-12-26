@@ -98,6 +98,12 @@ Note: Order is important. Above list element have more priority than
 below elements. If you dislike :repeat's priority, then you can change
 this behavior by this variable.")
 
+(defvar mykie:use-major-mode-key-override nil
+  "If this variable is non-nil, attach mykie's same global key function
+to major-mode's key function if the function is exists.
+To use this function, you need register your self-insert-key by using
+`mykie:set-keys' with 'with-self-key or `mykie:define-key-with-self-key'.
+Note this function is in development.")
 
 (defvar mykie:ignore-major-modes-for-self-insert-key '()
   "major-mode's list that ignore mykie's function if this list
@@ -359,7 +365,9 @@ then check whether minor-mode list match current `minor-mode-list'."
          ;; NORMAL
          mykie:before-user-normal-conditions
          mykie:normal-conditions
-         mykie:after-user-normal-conditions)))
+         mykie:after-user-normal-conditions))
+  (when mykie:use-major-mode-key-override
+    (add-hook 'change-major-mode-after-body-hook 'mykie:attach-mykie-func-to)))
 
 (defun mykie:init (args)
   "Initialize mykie's global-variable before do mykie's command."
