@@ -105,7 +105,7 @@ You can specify 'both, 'global, 'self or t to this variable.
 'both means do override self-insert-keys and other global-keys.
 'global means do override  other global-keys only(such as C-j, not [a-z]).
 'self means do override self-insert-keys only.
-t means same as 'self.")
+t means same as 'self. See also `mykie:attach-mykie-func-to'")
 
 (defvar mykie:ignore-major-modes-for-self-insert-key '()
   "major-mode's list that ignore mykie's function if this list
@@ -165,7 +165,8 @@ See also `mykie:attach-mykie-func-to' or `mykie:use-major-mode-key-override'")
 (defvar mykie:self-insert-keys '()
   "This variable will store self-insert-key's key and mykie's args pair list.
 To use this variable, you need to use function `mykie:define-key-with-self-key'
-or `mykie:set-keys' with 'with-self-key argument.")
+or `mykie:set-keys' with 'with-self-key argument.
+See also `mykie:attach-mykie-func-to' or `mykie:use-major-mode-key-override'")
 
 (defvar mykie:attached-mode-list '()
   "list that `mykie:attach-mykie-func-to' function attached mode name list.")
@@ -546,6 +547,7 @@ Example:
 
 (defun mykie:define-key-with-self-key (key &rest args)
   "Set self-insert-key(KEY) with `mykie' command.
+This function register :default `self-insert-command' automatically to ARGS.
 Example:
   (mykie:define-key-with-self-key
       \"a\" :C-u '(message \"I am C-u\"))"
