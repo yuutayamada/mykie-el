@@ -433,8 +433,8 @@ args with non-nil after do mykie's command."
 You can set below keyword by default:
 *Functions*
 :default - this is default function
-:default&bolp - call this if pushed key at bolp
-:default&eolp - call this if pushed key at eolp
+:bolp - call this if pushed key at bolp
+:eolp - call this if pushed key at eolp
 :C-u - call this  if you pushed this key after C-u
 :C-u&bolp - call this if you pushed key after C-u and the point was bolp
 :C-u&eolp - call this if you pushed key after C-u and the point was eolp
