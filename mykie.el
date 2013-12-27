@@ -107,7 +107,7 @@ You can specify 'both, 'global, 'self or t to this variable.
 'self means do override self-insert-keys only.
 t means same as 'self. See also `mykie:attach-mykie-func-to'")
 
-(defvar mykie:ignore-major-modes-for-self-insert-key '()
+(defvar mykie:major-mode-ignore-list '()
   "major-mode's list that ignore mykie's function if this list
 contains current major-mode")
 
@@ -555,7 +555,7 @@ Example:
   (apply 'mykie:define-key-core "global-map" global-map (mykie:format-key key)
          (append args
                  '(:default self-insert-command)
-                 (mykie:aif mykie:ignore-major-modes-for-self-insert-key
+                 (mykie:aif mykie:major-mode-ignore-list
                      `(:ignore-major-modes ,it)
                    nil)
                  (mykie:aif mykie:ignore-minor-modes-for-self-insert-key
