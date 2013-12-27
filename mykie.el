@@ -111,7 +111,7 @@ t means same as 'self. See also `mykie:attach-mykie-func-to'")
   "major-mode's list that ignore mykie's function if this list
 contains current major-mode")
 
-(defvar mykie:ignore-minor-modes-for-self-insert-key '()
+(defvar mykie:minor-mode-ignore-list '()
   "minor-mode's list that ignore mykie's function if this list
 contains current minor-mode")
 
@@ -558,7 +558,7 @@ Example:
                  (mykie:aif mykie:major-mode-ignore-list
                      `(:ignore-major-modes ,it)
                    nil)
-                 (mykie:aif mykie:ignore-minor-modes-for-self-insert-key
+                 (mykie:aif mykie:minor-mode-ignore-list
                      `(:ignore-minor-modes ,it)
                    nil))))
 (put 'mykie:define-key-with-self-key 'lisp-indent-function 1)
