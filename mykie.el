@@ -101,9 +101,11 @@ this behavior by this variable.")
 (defvar mykie:use-major-mode-key-override nil
   "If this variable is non-nil, attach mykie's same global key function
 to major-mode's key function if the function is exists.
-To use this function, you need register your self-insert-key by using
-`mykie:set-keys' with 'with-self-key or `mykie:define-key-with-self-key'.
-Note this function is in development.")
+You can specify 'both, 'global, 'self or t to this variable.
+'both means do override self-insert-keys and other global-keys.
+'global means do override  other global-keys only(such as C-j, not [a-z]).
+'self means do override self-insert-keys only.
+t means same as 'self.")
 
 (defvar mykie:ignore-major-modes-for-self-insert-key '()
   "major-mode's list that ignore mykie's function if this list
@@ -154,6 +156,12 @@ contains current minor-mode")
 (defvar mykie:current-thing nil)
 (defvar mykie:region-str "")
 (defvar mykie:C-u-num nil)
+
+(defvar mykie:global-keys '()
+  "This variable will store global-map's key and mykie's args pair
+list without self insert key such as \"a\" etc..
+See also `mykie:attach-mykie-func-to' or `mykie:use-major-mode-key-override'")
+
 (defvar mykie:self-insert-keys '()
   "This variable will store self-insert-key's key and mykie's args pair list.
 To use this variable, you need to use function `mykie:define-key-with-self-key'
@@ -212,27 +220,36 @@ Example
   (run-hooks 'post-command-hook)
   (mykie:run-hook 'after))
 
-(defun mykie:attach-mykie-func-to (&optional mode)
-  "Note this function is in development.
-Attach mykie's functions to the MODE's same key function without :default.
+(defun mykie:attach-mykie-func-to (&optional mode-symbol)
+  "Attach mykie's functions to the MODE's same key function without :default.
 Use the MODE's function as :default function.
-If you aren't specified the MODE, then use current major-mode by default.
+If you didn't specify the MODE, then use current major-mode by default.
 The MODE is mode name's symbol such as 'emacs-lisp-mode."
-  (condition-case err
-      (loop with mode        = (or mode major-mode)
-            with keymap-name = (concat (symbol-name mode) "-map")
-            with keymap      = (eval (intern keymap-name))
-            for (key args) in mykie:self-insert-keys
-            for mode-func = (lookup-key keymap key)
-            if (member mode mykie:attached-mode-list)
-            do (error "Mykie: already attached")
-            if (and (keymapp keymap)
-                    (functionp mode-func)
-                    (not (string-match "^mykie:" (symbol-name mode-func))))
-            do (mykie:clone-key
-                key args `(:default ,mode-func) `(,keymap-name . ,keymap))
-            finally (add-to-list 'mykie:attached-mode-list mode))
-    (error err)))
+  (interactive)
+  (lexical-let*
+      ((mode (or mode-symbol major-mode))
+       (attach-func
+        (lambda (keys)
+          (loop with keymap-name = (concat (symbol-name mode) "-map")
+                with keymap      = (eval (intern keymap-name))
+                for (key args) in keys
+                for mode-func = (lookup-key keymap key)
+                if (and (keymapp keymap)
+                        (functionp mode-func)
+                        (not (string-match "^mykie:" (symbol-name mode-func))))
+                do (mykie:clone-key
+                    key args `(:default ,mode-func) `(,keymap-name . ,keymap))))))
+    (condition-case err
+        (if (member mode mykie:attached-mode-list)
+            (error (format "Mykie: already attached %s" (symbol-name mode)))
+          (case mykie:use-major-mode-key-override
+            (both   (funcall attach-func mykie:global-keys)
+                    (funcall attach-func mykie:self-insert-keys))
+            (global (funcall attach-func mykie:global-keys))
+            (self   (funcall attach-func mykie:self-insert-keys))
+            (t      (funcall attach-func mykie:self-insert-keys)))
+          (add-to-list 'mykie:attached-mode-list mode))
+      (error err))))
 
 (defun mykie:repeat-p ()
   (equal this-command last-command))
@@ -481,6 +498,9 @@ Example:
                  ;; Workaround: Assign command name
                  (sym (funcall mykie:make-funcname-function
                                args mykie:keymaps keymap key keymap-name)))
+    (when (and (equal "global-map" keymap-name)
+               (< 1 (length (key-description key))))
+      (add-to-list 'mykie:global-keys `(,key ,args)))
     (fset sym (lambda () (interactive) (apply 'mykie args)))
     (define-key keymap key sym)
     (mykie:aif (plist-get args :clone)
