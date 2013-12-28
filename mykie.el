@@ -391,8 +391,9 @@ then check whether minor-mode list match current `minor-mode-list'."
          mykie:before-user-normal-conditions
          mykie:normal-conditions
          mykie:after-user-normal-conditions))
-  (when mykie:use-major-mode-key-override
-    (add-hook 'change-major-mode-after-body-hook 'mykie:attach-mykie-func-to)))
+  (if mykie:use-major-mode-key-override
+      (add-hook  'change-major-mode-after-body-hook 'mykie:attach-mykie-func-to)
+    (remove-hook 'change-major-mode-after-body-hook 'mykie:attach-mykie-func-to)))
 
 (defun mykie:init (args)
   "Initialize mykie's global-variable before do mykie's command."
