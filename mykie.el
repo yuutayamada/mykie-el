@@ -74,6 +74,7 @@
   '((when (mykie:repeat-p)   :repeat)
     (mykie:get-major-mode-state)
     (mykie:get-prog-mode-state)
+    (mykie:get-comment/string-state)
     (mykie:get-thing-state   'email)
     (mykie:get-thing-state   'url)
     (when (minibufferp)      :minibuff)
