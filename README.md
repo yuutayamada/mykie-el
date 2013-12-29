@@ -12,7 +12,7 @@ You can install from MELPA by M-x package-install RET mykie.
 
 Below configuration is common setting for mykie.el.
 You can see more example in example section.
-Note: below `mykie:use-major-mode-key-override` is bit complex,
+Note: below `mykie:use-major-mode-key-override` is a bit complex,
 See below section 'Major-mode's keys overriding' for details.
 
 ```lisp
@@ -51,7 +51,7 @@ You can specify like this too.
    :region   'query-replace-regexp)
 ```
 
-### Available Keywords
+## Available Keywords
 
 You can specify below keywords to mykie's arguments such as :default
 or :C-u etc..(You may saw those keywords on above examples)
@@ -85,6 +85,9 @@ Note: below keyword can specify function only. See Available Forms too.
 | :prog              | Call this if current buffer is related programming see also `prog-mode' from Emacs. Note this function can use from Emacs 24.1.
 | :C-u&prog          | Call this if you satisfied :C-u & :prog
 | :region&prog       | Call this if you satisfied :region & :prog
+| :err               | Call this if flymake-err-info or flycheck-current-errors is non-nil
+| :C-u&err           | Call this if you satisfied :C-u & :err
+| :region&err        | Call this if you satisfied :region & :err
 | :minibuff          | Call this if current point is in minibuffer
 | :readonly          | Call this if current buffer is read-only
 | :comment           | Call this if current point is string or comment face
@@ -99,89 +102,31 @@ See below description.
 | :deactivate-region  | symbol         | deactivate selecting region after mykie executed command. You can specify this t, 'region, 'region&C-u. |
 | :region-handle-flag | symbol         | Do copying or killing before command executing. This function is convenience if you want to use kill-ring's variable. But there is mykie:region-str variable that always store region's strings. |
 
-### Change condition(from v0.0.4)
+## lazy ordering(from v0.1.1)
 
-When you pushed `mykie`s keybind, mykie.el is trying to compare each
-`mykie:conditions`s condition and then if the condition is returning
-value like :C-u then mykie search same keyword from current mykie
-function.
-If same keyword argument exists, then do related function.
-Otherwise, compare next condition.
-If comparing is failed then do :default function.
-
-You can change condition's order and condition by `mykie:conditions`
-variable.
-For example:
+You can change ordering by each key-bindings when you register key-bindings.
+To use this function, set t to mykie:use-lazy-order variable:
 
 ```lisp
-(setq mykie:conditions
-  '(;; REGION
-    (when (region-active-p)
-      (or (and current-prefix-arg
-               :region&C-u)
-          :region))
-    ;; PREFIX-ARGUMENT
-    (when current-prefix-arg
-      (or (and (eobp)        :C-u&eobp)
-          (and (bobp)        :C-u&bobp)))
-    (when current-prefix-arg
-      (or (and (bolp)        :C-u&bolp)
-          (and (eolp)        :C-u&eolp)))
-    (mykie:get-prefix-arg-state)
-    (when current-prefix-arg :C-u) ; Use :C-u if C-u*X isn't exists
-    ;; -- this is NOT default condition --
-    (when t :your-favorite-keyword)
-    ;; -----------------------------------
-    ;; NORMAL
-    (when (mykie:repeat-p)   :repeat)
-    (when (minibufferp)      :minibuff)
-    (when (bobp)             :bobp)
-    (when (eobp)             :eobp)
-    (when (bolp)             :bolp)
-    (when (eolp)             :eolp)))
+(setq mykie:use-lazy-order t)
+(mykie:set-keys nil
+   "C-0"
+   :default '(message "hi")
+   :email   '(message "prior :email than :emacs-lisp-mode")
+   :emacs-lisp-mode '(message "You can't see this if point is at email")
+   :C-u*2   '(message "howdy")
+   :C-u     '(message "hello")
+   :C-u*3   '(message "hey") ; <- you can't see
+   "C-1"
+   :default '(message "hi")
+   :C-u*3   '(message "howdy")
+   :C-u     '(message "hello")
+   :C-u*2   '(message "hey")) ; <- you can't see
 ```
 
-and this is test command.
-
-```lisp
-(mykie:global-set-key "C-0"
-  :region  '(message "You are selecting region now")
-  :your-favorite-keyword '(message "howdy")
-  :default '(message "default func"))))
-```
-
-Above example is added a condition that return :your-favorite-keyword.
-Maybe You can see "howdy" message by pushing C-0.
-
-Note: above element priority of `mykie:conditions` is high than below
-condition. So you can't call :default function if you are selecting
-region and if you set :region's function.
-
-### Add your condition
-
-There is another way to add your favorite condition.(from v0.0.7)
-For example.
-
-```lisp
-(setq mykie:before-user-normal-conditions
-      '((when t :this-is-test))
-(mykie:initialize)
-```
-
-Then you can use :this-is-test keyword argument.
-This way is convenience if you want to add condition without changing
-default conditions.
-
-You can use below variables to add your conditions
-
-| variable name                           | description |
-|:----------------------------------------|:------------|
-| mykie:before-user-region-conditions     | check this before check conditions related region
-| mykie:after-user-region-conditions      | check this after check conditions related region
-| mykie:before-user-prefix-arg-conditions | check this before check conditions related prefix-argument
-| mykie:after-user-prefix-arg-conditions  | check this after check conditions related prefix-argument
-| mykie:before-user-normal-conditions     | check this before check normal conditions
-| mykie:after-user-normal-conditions      | check this after check normal conditions
+Note: This function is available only related same conditions.
+i.e., you can't change ordering between region & C-u and so on.
+Note: You don't need care :default keyword's ordering.
 
 ## Examples
 
@@ -209,14 +154,14 @@ There are four patterns to specify `mykie` keybinds.
 
 ```lisp
 (mykie:global-set-key "C-0"
-  :default (message "hi"))
+  :default '(message "hi"))
 ```
 
 - `mykie:define-key`
 
 ```lisp
 (mykie:define-key emacs-lisp-mode "C-0"
-  :default (message "hi hello"))
+  :default '(message "hi hello"))
 ```
 
 -  `mykie:define-key-with-self-key`
@@ -274,16 +219,13 @@ For self-insert-command like "a", "b", "c" etc..
 ```
 
 ### Major-mode's keys overriding
+I think almost Emacs lisp package do not use the major-mode keybind
+with C-u prefix.(of course there are exception like Magit)
+This section explain how to attach mykie's function of global-map to
+specific keymap.
 
 Here is an example:
 ```lisp
-;; You can specify 'both or 'global 'self or t to
-;; mykie:use-major-mode-key-override.
-;; 'both means use overriding major-mode keys both case.
-;; 'global means use overriding major-mode keys by global-map's keys
-;; without self-insert-command keys.
-;; 'self means use overriding major-mode keys by self-insert-command keys.
-;; if you set nil, then don't overriding major-mode key.
 (setq mykie:use-major-mode-key-override 'both)
 (mykie:initialize)
 (mykie:set-keys nil ; <- nil means registering global-map
@@ -297,32 +239,44 @@ Here is an example:
   "c"  :C-u '(message "C-u+c"))
 ```
 
+You can specify 'both or 'global 'self or t to
+mykie:use-major-mode-key-override.
+'both means use overriding major-mode keys both case.
+'global means use overriding major-mode keys by global-map's keys
+without self-insert-command keys.
+'self means use overriding major-mode keys by self-insert-command keys.
+if you set nil, then don't overriding major-mode key.
 
-There are some problem, several program is using :C-u key to change the
-key's behavior or can't override automatically(although mykie.el is using
-change-major-mode-after-body-hook to override major-mode keys.)
-
-To avoid major-mode key overriding, you can do like this:
+I was mentioned before, there is a problem, several program is using
+:C-u key to change the key's behavior.
+To avoid major-mode key overriding, you can specify specific modes like this:
 
 ```lisp
 (setq mykie:major-mode-ignore-list '(emacs-lisp-mode)
       mykie:minor-mode-ignore-list '(diff-minor-mode))
 ```
 
-You can use below configuration. This way can specify specific keybind
-only. Then you can play tetris.
+You can use below configuration to avoid overriding major-mode key.
+This way can ignore overriding major-mode key only specific keybind.
+So you can't play tetris if current major-mode that you specified to
+:ignore-major-modes has same keybind.
 
 ```lisp
+(setq mykie:use-major-mode-key-override 'both)
+(mykie:initialize)
 (mykie:set-keys nil ; <- nil means registering global-map
-  "C-t"
-  :default 'tetris :C-u '(message "C-u+C-t")
-  :ignore-major-modes '(emacs-lisp-mode)
+  "C-w"
+  :default '(message ":default will change to major-mode's function of same key")
+  :C-u 'tetris
+  :ignore-major-modes '(magit-status-mode)
   :ignore-major-modes '(diff-minor-mode))
 ```
 
-Second case you can override major-mode's keys like this:
+You can specify specific mode by your hand.
+
 ```lisp
-;; specify major-mode name as symbol.
+(setq mykie:use-major-mode-key-override nil)
+(mykie:initialize)
 (mykie:attach-mykie-func-to 'emacs-lisp-mode)
 ```
 
@@ -421,11 +375,11 @@ This is an example using [quickrun.el](https://github.com/syohex/emacs-quickrun)
   :region&prog 'quickrun-region)
 ```
 
-### mykie:loop function
+### Continuous Command
 
 Below mykie:loop function is trial now.
 You can set keybinds and functions' pair.
-Keybinds can specify [a-zA-Z] only.
+Key-bindings can specify [a-zA-Z] only.
 (Maybe this function fail if you set existing keybind)
 
 ```lisp
@@ -448,6 +402,52 @@ Keybinds can specify [a-zA-Z] only.
      "f" '(funcall scroll 'up)
      "b" '(funcall scroll 'down))))
 ```
+
+There is a similar command that do first command and then wait user input.
+
+```lisp
+(mykie:global-set-key
+  "C-j"
+  :default '(mykie:do-while
+               "j" 'newline-and-indent
+               "u" 'undo))
+```
+
+Above command do newline-and-indent and then wait user input.
+
+## Customizing
+
+You can change or attach `mykie`s conditions.
+
+Here is an example to attach conditions.
+
+```lisp
+(setq mykie:before-user-normal-conditions
+      '(;; appendixes to use lazy ordering
+        (:point-one :point-two)
+        ;; conditions
+        (when (equal 1 (point)) :point-one)
+        (when (equal 2 (point)) :point-two))
+(mykie:initialize)
+```
+
+Then you can use :point-one and :point-two keyword.
+Above example used `mykie:before-user-normal-conditions` variable.
+But there are also below variables.
+
+| VARIABLE                                | DESCRIPTION |
+|:----------------------------------------|:------------|
+| mykie:before-user-region-conditions     | attach this to mykie:region-conditions-base before it
+| mykie:region-conditions-base            | default conditions for region function
+| mykie:after-user-region-conditions      | attach this to mykie:region-conditions-base after it
+| mykie:before-user-prefix-arg-conditions | attach this to mykie:prefix-arg-conditions-base before it
+| mykie:prefix-arg-conditions-base        | default conditions for prefix-arg function
+| mykie:after-user-prefix-arg-conditions  | attach this to mykie:prefix-arg-conditions-base after it
+| mykie:before-user-normal-conditions     | attach this to mykie:normal-conditions-base after it
+| mykie:normal-conditions-base            | default conditions for normal function
+| mykie:after-user-normal-conditions      | attach this to mykie:normal-conditions-base after it
+
+Note: if you are using lazy ordering, then those variable's ordering does not make sense.
 
 ## License
 `mykie.el` is released under GPL v3.
