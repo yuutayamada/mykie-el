@@ -227,6 +227,11 @@ Otherwise nil.")
           if func
           do (mykie:execute func))))
 
+(defun mykie:do-while (&rest args)
+  "Firstly do 1th function of ARGS and then do `mykie:loop' with ARGS."
+  (mykie:execute (nth 1 args))
+  (apply 'mykie:loop args))
+
 (defun mykie:execute (func)
   "Execute FUNC.
 You can specify like following forms to the FUNC:
