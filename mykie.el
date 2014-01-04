@@ -47,31 +47,33 @@
 (eval-when-compile (require 'cl))
 
 ;; CUSTOMIZE VARIABLE
-(defvar mykie:region-conditions
-  '((when (region-active-p)
-      (or (and current-prefix-arg
-               :region&C-u)
-          (mykie:get-major-mode-state "region&")
-          (mykie:get-prog-mode-state "region&")
-          :region))))
+(defvar mykie:region-conditions-base
+  '((:region&C-u :region&prog :region)
+    (or (and current-prefix-arg
+             :region&C-u)
+        (mykie:get-major-mode-state "region&")
+        (mykie:get-prog-mode-state "region&")
+        :region)))
 
-(defvar mykie:prefix-arg-conditions
-  '((mykie:get-major-mode-state "C-u&")
+(defvar mykie:prefix-arg-conditions-base
+  '((:C-u&prog :C-u&email :C-u&url :C-u
+               :C-u&bobp :C-u&eobp :C-u&bolp :C-u&eolp)
+    (mykie:get-major-mode-state "C-u&")
     (mykie:get-prog-mode-state "C-u&")
     (mykie:get-thing-state 'email :prefix "C-u&")
     (mykie:get-thing-state 'url   :prefix "C-u&")
-    (when current-prefix-arg
-      (or (and (eobp)        :C-u&eobp)
-          (and (bobp)        :C-u&bobp)))
-    (when current-prefix-arg
-      (or (and (bolp)        :C-u&bolp)
-          (and (eolp)        :C-u&eolp)))
+    (or (and (eobp)        :C-u&eobp)
+        (and (bobp)        :C-u&bobp))
+    (or (and (bolp)        :C-u&bolp)
+        (and (eolp)        :C-u&eolp))
     (mykie:get-prefix-arg-state)
     ;; Use :C-u if C-u*N isn't exists
-    (when current-prefix-arg :C-u)))
+    :C-u))
 
-(defvar mykie:normal-conditions
-  '((when (mykie:repeat-p)   :repeat)
+(defvar mykie:normal-conditions-base
+  '((:repeat :minibuff :bolp :eolp :bobp :eobp :readonly
+             :url :email :comment :prog)
+    (when (mykie:repeat-p)   :repeat)
     (mykie:get-major-mode-state)
     (mykie:get-prog-mode-state)
     (mykie:get-comment/string-state)
@@ -91,6 +93,10 @@
 (defvar mykie:before-user-normal-conditions '())
 (defvar mykie:after-user-normal-conditions '())
 
+(defvar mykie:region-conditions)
+(defvar mykie:prefix-arg-conditions)
+(defvar mykie:normal-conditions)
+
 (defvar mykie:conditions '()
   "This variable is evaluated in mykie's loop by each the when statement.
 Then if the when statement is match, return value(like :C-u) and then
@@ -107,6 +113,27 @@ You can specify 'both, 'global, 'self or t to this variable.
 'global means do override  other global-keys only(such as C-j, not [a-z]).
 'self means do override self-insert-keys only.
 t means same as 'self. See also `mykie:attach-mykie-func-to'")
+
+(defvar mykie:use-lazy-order nil
+  "If this variable is non-nil, you can change execution order when
+  you register key-bindings.
+This function is convenience if you want to change keybind order by each keybind.
+For example:
+ (mykie:set-keys nil
+   \"C-0\"
+   :default '(message \"hi\")
+   :C-u*2   '(message \"howdy\")
+   :C-u     '(message \"hello\")
+   :C-u*3   '(message \"hey\") ; <- you can't see
+   \"C-1\"
+   :default '(message \"hi\")
+   :C-u*3   '(message \"howdy\")
+   :C-u     '(message \"hello\")
+   :C-u*2   '(message \"hey\")) ; <- you can't see
+This example you never be able to see hey message. Because `mykie' is prior
+above keyword and function pair if you set non-nil to this variable.
+Note: you can change order only same section's conditions.
+i.e., you can't change order region's function and C-u's function.")
 
 (defvar mykie:major-mode-ignore-list '()
   "major-mode's list that ignore mykie's function if this list
@@ -377,23 +404,59 @@ then check whether minor-mode list match current `minor-mode-list'."
             do (return t))))
 
 (defun mykie:initialize ()
-  (setq mykie:conditions
-        (append
-         ;; REGION
-         mykie:before-user-region-conditions
-         mykie:region-conditions
-         mykie:after-user-region-conditions
-         ;; PREFIX-ARGUMENT
-         mykie:before-user-prefix-arg-conditions
-         mykie:prefix-arg-conditions
-         mykie:after-user-prefix-arg-conditions
-         ;; NORMAL
-         mykie:before-user-normal-conditions
-         mykie:normal-conditions
-         mykie:after-user-normal-conditions))
+  (setq mykie:region-conditions
+        (mykie:marge-conditions mykie:before-user-region-conditions
+                                mykie:region-conditions-base
+                                mykie:after-user-region-conditions)
+        mykie:prefix-arg-conditions
+        (mykie:marge-conditions mykie:before-user-prefix-arg-conditions
+                                mykie:prefix-arg-conditions-base
+                                mykie:after-user-prefix-arg-conditions)
+        mykie:normal-conditions
+        (mykie:marge-conditions mykie:before-user-normal-conditions
+                                mykie:normal-conditions-base
+                                mykie:after-user-normal-conditions))
+  (setq mykie:conditions '(mykie:region-conditions
+                           mykie:prefix-arg-conditions
+                           mykie:normal-conditions))
   (if mykie:use-major-mode-key-override
       (add-hook  'change-major-mode-after-body-hook 'mykie:attach-mykie-func-to)
     (remove-hook 'change-major-mode-after-body-hook 'mykie:attach-mykie-func-to)))
+
+(defun mykie:marge-conditions (&rest conditions)
+  (loop with merge = (lambda (p s)
+                       (cons (append (car p) (car s))
+                             (append (cdr p) (cdr s))))
+        with merged = '()
+        with last = (1- (length conditions))
+        for i from 0 to last
+        for next = (1+ i)
+        for primary   = (nth i conditions) then (or merged (nth i conditions))
+        for secondary = (nth next conditions)
+        if (and (mykie:style-valid-p primary)
+                (mykie:style-valid-p secondary))
+        do (setq merged (funcall merge primary secondary))
+        else if (mykie:style-valid-p primary)
+        do (setq merged primary)
+        else if (mykie:style-valid-p secondary)
+        do (setq merged secondary)
+        finally return merged))
+
+(defun mykie:style-valid-p (conditions)
+  "Check CONDITIONS is whether valid list.
+Valid CONDITIONS is list that first element is list of keywords and
+remaining elements are conditions that return keyword like :C-u if
+condition succeed."
+  (when conditions
+    (destructuring-bind (appendixes . conds) conditions
+      (if (and (listp appendixes) (listp conds)
+               (loop for appendix in appendixes
+                     if (not (keywordp appendix)) do
+                     (return nil)
+                     finally return t))
+          t
+        (message "mykie: condition style is not valid.")
+        nil))))
 
 (defun mykie:init (args)
   "Initialize mykie's global-variable before do mykie's command."
@@ -454,16 +517,59 @@ If you set 'region&C-u then deactivate region when you pushed C-u.
 If you set t then deactivate region in both cases.
 You can use `mykie:region-str' variable that have region's string."
   (loop initially (when (eq 'exit (mykie:init args)) (return))
-        for condition in mykie:conditions
-        for state = (eval condition)
-        for func  = (plist-get args state)
-        if (member state args) do
-        (setq mykie:current-state state)
-        (mykie:execute func)
-        (return)
+        with keywords = (loop for arg in args
+                              if (keywordp arg)
+                              collect arg)
+        for conditions in mykie:conditions
+        for cond-str = (symbol-name conditions)
+        if (mykie:precheck-ok-p cond-str)
+        do (when (eq 'done (mykie:iter args (eval conditions) keywords))
+             (return)) ; exit from loop macro
         finally (mykie:execute (plist-get args :default)))
   (unless (mykie:repeat-p)
     (setq mykie:current-point (point))))
+
+(defun mykie:iter (args conditions keywords)
+  "Return 'done symbol if this function execute command or function.
+If this function didn't execute command or function. Then `mykie' will
+call this function again or execute :default function from `mykie'."
+  (catch 'done
+    (loop with appendixes = (car conditions)
+          with conds      = (cdr conditions)
+          for keyword in keywords
+          for kw-str = (symbol-name keyword)
+          if (or (member keyword appendixes)
+                 (or (string-match "^:.+-mode$"      kw-str)
+                     (string-match "^:M-[0-9]+$"     kw-str)
+                     (string-match "^:C-u\\*[0-9]+$" kw-str)))
+          do (loop for condition in conds
+                   for state = (eval condition)
+                   if (mykie:match-p state keyword args)
+                   do (progn (setq mykie:current-state state)
+                             (mykie:execute (plist-get args state))
+                             (throw 'done 'done))))))
+
+(defun mykie:match-p (state keyword args)
+  "Return non-nil if ARGS is containing STATE.
+If you set non-nil to `mykie:use-lazy-order', then this function check
+whether STATE is equal to KEYWORD.
+See also `mykie:use-lazy-order' variable."
+  (and (or (null mykie:use-lazy-order)
+           (and mykie:use-lazy-order
+                (eq keyword state)))
+       (member state args)))
+
+(defun mykie:precheck-ok-p (cond-str)
+  "Pre-check condition depending on state.
+If COND-STR is containing \"mykie:region\" then check whether region is active.
+If COND-STR is containing \"mykie:prefix-arg\" then check
+`current-prefix-arg' is non-nil. Otherwise check whether containing
+\"mykie:normal\"."
+  (or (and (region-active-p)
+           (string-match "^mykie:region" cond-str))
+      (and current-prefix-arg
+           (string-match "^mykie:prefix-arg" cond-str))
+      (string-match "^mykie:normal" cond-str)))
 
 (defun mykie:run-hook (direction)
   (case direction
