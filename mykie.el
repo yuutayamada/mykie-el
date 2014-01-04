@@ -48,16 +48,18 @@
 
 ;; CUSTOMIZE VARIABLE
 (defvar mykie:region-conditions-base
-  '((:region&C-u :region&prog :region)
+  '((:region&C-u :region&prog :region&err :region)
     (or (and current-prefix-arg
              :region&C-u)
+        (mykie:get-error-state "region&")
         (mykie:get-major-mode-state "region&")
         (mykie:get-prog-mode-state "region&")
         :region)))
 
 (defvar mykie:prefix-arg-conditions-base
-  '((:C-u&prog :C-u&email :C-u&url :C-u
-               :C-u&bobp :C-u&eobp :C-u&bolp :C-u&eolp)
+  '((:C-u&err :C-u&prog :C-u&email :C-u&url :C-u
+              :C-u&bobp :C-u&eobp :C-u&bolp :C-u&eolp)
+    (mykie:get-error-state "C-u&")
     (mykie:get-major-mode-state "C-u&")
     (mykie:get-prog-mode-state "C-u&")
     (mykie:get-thing-state 'email :prefix "C-u&")
@@ -71,9 +73,10 @@
     :C-u))
 
 (defvar mykie:normal-conditions-base
-  '((:repeat :minibuff :bolp :eolp :bobp :eobp :readonly
+  '((:repeat :err :minibuff :bolp :eolp :bobp :eobp :readonly
              :url :email :comment :prog)
     (when (mykie:repeat-p)   :repeat)
+    (mykie:get-error-state)
     (mykie:get-major-mode-state)
     (mykie:get-prog-mode-state)
     (mykie:get-comment/string-state)
@@ -339,6 +342,14 @@ result(i.e., email address or url) after call this function."
   (when (nth 8 (save-excursion (syntax-ppss
                                 (if (bobp) (point) (1- (point))))))
     :comment))
+
+(defun mykie:get-error-state (&optional prefix)
+  "Return :err, :C-u&err or :region&err if `flycheck-current-errors' or
+`flymake-err-info' is non-nil.
+You can specify \"C-u&\" or \"region&\" to the PREFIX."
+  (when (or (bound-and-true-p flymake-err-info)
+            (bound-and-true-p flycheck-current-errors))
+    (mykie:concat-prefix-if-exist 'err prefix)))
 
 (defun mykie:get-major-mode-state (&optional prefix)
   "Return :major-mode, :C-u&major-mode or :region&major-mode if
