@@ -613,10 +613,10 @@ Example:
    :C-u '(message \"C-u y\"))"
   `(mykie:define-key-core
     (symbol-name (quote ,keymap))
-    ,keymap ,key ,@args))
+    ,keymap ,key ,args))
 (put 'mykie:define-key 'lisp-indent-function 2)
 
-(defun mykie:define-key-core (keymap-name keymap key &rest args)
+(defun mykie:define-key-core (keymap-name keymap key args)
   (unless (memq keymap mykie:keymaps) (push keymap mykie:keymaps))
   (lexical-let* ((key (mykie:format-key key))
                  (args (append args `(:key-info (,key . ,keymap-name))))
@@ -638,7 +638,7 @@ Example:
                       :clone))
        (map-name (or (car keymap-info) "global-map"))
        (map      (or (cdr keymap-info)  global-map)))
-    (apply 'mykie:define-key-core map-name map key new-args)))
+    (funcall 'mykie:define-key-core map-name map key new-args)))
 
 (defun mykie:replace-property (args key-and-property)
   (append (mykie:filter args (car key-and-property))
@@ -657,7 +657,7 @@ Example:
           else if (not (member i ignore))
           collect (nth i args))))
 
-(defun mykie:global-set-key (key &rest args)
+(defmacro mykie:global-set-key (key &rest args)
   "Give KEY a global binding as `mykie' command.
 In other words, `mykie' + `global-set-key'.
 
@@ -666,7 +666,7 @@ Example:
    :default 'self-insert-command
    :region '(message \"%s\" mykie:region-str)
    :C-u '(message \"C-u z\"))"
-  (apply 'mykie:define-key-core "global-map" global-map key args))
+  `(mykie:define-key-core "global-map" global-map ,key (quote ,args)))
 (put 'mykie:global-set-key 'lisp-indent-function 1)
 
 (defun mykie:define-key-with-self-key (key &rest args)
@@ -676,7 +676,7 @@ Example:
   (mykie:define-key-with-self-key
       \"a\" :C-u '(message \"I am C-u\"))"
   (add-to-list 'mykie:self-insert-keys `(,key ,args))
-  (apply 'mykie:define-key-core "global-map" global-map (mykie:format-key key)
+  (funcall 'mykie:define-key-core "global-map" global-map (mykie:format-key key)
          (append args
                  '(:default self-insert-command)
                  (mykie:aif mykie:major-mode-ignore-list
@@ -717,18 +717,19 @@ Examples:
    :region 'query-replace-regexp
    \"b\"
    :C-u '(message \"called b\"))"
-  `(let ((order (or ,keymap-or-order 'global)))
+  `(let ((order   ,keymap-or-order))
      (if (keymapp ,keymap-or-order)
-         (mykie:set-keys-core order ,keymap-or-order ,@args)
-       (mykie:set-keys-core order global-map ,@args))))
+         (mykie:set-keys-core order (quote ,keymap-or-order) (quote ,args))
+       (mykie:set-keys-core order 'global-map (quote ,args)))))
 (put 'mykie:set-keys 'lisp-indent-function 1)
 
-(defun mykie:set-keys-core (order keymap &rest args)
+(defun mykie:set-keys-core (order keymap-sym args)
   (lexical-let
       ((set-keys (lambda (func)
                    (loop with key-and-prop = '()
                          with last = (1- (length args))
-                         with keymap-name = (quote keymap)
+                         with keymap-name = (symbol-name keymap-sym)
+                         with keymap = (eval keymap-sym)
                          for i from 0 to last
                          for next = (1+ i)
                          for key-or-prop = (nth i args)
@@ -741,12 +742,10 @@ Examples:
                          do (progn
                               (case func
                                 (mykie:define-key-core
-                                 (apply func keymap-name keymap key-and-prop))
+                                 (funcall func keymap-name keymap (car key-and-prop) (cdr key-and-prop)))
                                 (t (apply func key-and-prop)))
                               (setq key-and-prop nil))))))
     (case order
-      (global
-       (funcall set-keys 'mykie:global-set-key))
       (with-self-key
        (funcall set-keys 'mykie:define-key-with-self-key))
       (t (funcall set-keys 'mykie:define-key-core)))))
