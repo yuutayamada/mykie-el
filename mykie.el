@@ -425,25 +425,22 @@ If you set 'region then deactivate region when you did not push C-u.
 If you set 'region&C-u then deactivate region when you pushed C-u.
 If you set t then deactivate region in both cases.
 You can use `mykie:region-str' variable that have region's string."
-  (loop initially (when (eq 'exit (mykie:init args)) (return))
-        with keywords = (loop for arg in args
-                              if (keywordp arg)
-                              collect arg)
-        for conditions in mykie:group-conditions
-        if (mykie:precheck-ok-p conditions)
-        do (when (eq 'done (mykie:iter args (symbol-value conditions) keywords))
-             (return)) ; exit from loop macro
-        finally (mykie:execute (or (plist-get args :default)
-                                   (plist-get args t))))
+  (catch 'done
+    (loop initially (when (eq 'exit (mykie:init args)) (return))
+          with keywords = (loop for arg in args
+                                if (keywordp arg)
+                                collect arg)
+          for conditions in mykie:group-conditions
+          if (mykie:precheck-ok-p conditions) do
+          (loop for keyword in keywords
+                if (mykie:predicate (symbol-value conditions) keyword) do
+                (setq mykie:current-state keyword)
+                (mykie:execute (plist-get args keyword))
+                (throw 'done 'done))
+          finally (mykie:execute (or (plist-get args :default)
+                                     (plist-get args t)))))
   (unless (mykie:repeat-p)
     (setq mykie:current-point (point))))
-
-(defun mykie:iter (args conditions keywords)
-  (loop for keyword in keywords
-        if (mykie:predicate conditions keyword) do
-        (setq mykie:current-state keyword)
-        (mykie:execute (plist-get args keyword))
-        (return 'done)))
 
 (defun mykie:predicate (predicates target-keyword)
   (loop with matched
