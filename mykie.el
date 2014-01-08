@@ -58,8 +58,8 @@
   '((:C-u&err     . (mykie:error-occur-p))
     ("^:.+-mode$" . (mykie:get-major-mode-state "C-u&"))
     (:C-u&prog    . mykie:prog-mode-flag)
-    (:C-u&email   . (mykie:get-thing-state 'email :prefix "C-u&"))
-    (:C-u&url     . (mykie:get-thing-state 'url   :prefix "C-u&"))
+    (:C-u&email   . (mykie:thing-exist-p 'email))
+    (:C-u&url     . (mykie:thing-exist-p 'url))
     (:C-u&bobp    . (bobp))
     (:C-u&eobp    . (eobp))
     (:C-u&bolp    . (bolp))
@@ -74,8 +74,8 @@
     ("^:.+-mode$" . (mykie:get-major-mode-state))
     (:prog        . mykie:prog-mode-flag)
     (:comment     . (mykie:get-comment/string-state))
-    (:email       . (mykie:get-thing-state   'email))
-    (:url         . (mykie:get-thing-state   'url))
+    (:email       . (mykie:thing-exist-p 'email))
+    (:url         . (mykie:thing-exist-p 'url))
     (:minibuff    . (minibufferp))
     (:bobp        . (bobp))
     (:eobp        . (eobp))
@@ -300,30 +300,11 @@ THEN-FORM and ELSE-FORMS are then excuted just like in `if'."
      (if it ,then-form ,@else-forms)))
 (put 'mykie:aif 'lisp-indent-function 2)
 
-(defun* mykie:get-thing-state (thing &key prefix)
-  "Return :email, :url state.
-The THING is you can specify 'email or 'url.
-If the THING is 'email then check whether thing-at-point is email.
-Then if there is email, return :email.
-If the THING is 'url then check whether thing-at-point is url.
-Then if there is url, return :url.
-Also you can specify \"C-u&\" or \"region&\" to PREFIX.
-If you specify \"C-u&\", check whether there is current-prefix-arg.
-If you specify \"region&\", check whether region is active.
-If Result is true, then return prefix + thing state such as
-:C-u&url(if you specify \"&C-u\" to PREFIX in this case).
-You can use `mykie:current-thing' variable to get
-result(i.e., email address or url) after call this function."
-  (lexical-let
-      ((thing-state (mykie:concat-prefix-if-exist thing prefix)))
-    (when thing-state
-      (case thing
-        ((url email)
-         (mykie:aif (thing-at-point thing)
-             (setq mykie:current-thing it)
-           (setq mykie:current-thing nil))
-         (when mykie:current-thing
-           thing-state))))))
+(defun mykie:thing-exist-p (thing)
+  "Return thing-at-point's return value of THING.
+If return value is non-nil, then save the value to `mykie:current-thing'."
+  (mykie:aif (thing-at-point thing)
+      (setq mykie:current-thing it)))
 
 (defun mykie:concat-prefix-if-exist (state prefix)
   (lexical-let
