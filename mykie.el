@@ -159,6 +159,19 @@ contains current minor-mode")
          (plist-get args :default)))
   "Fallback function that returning fallback function's symbol.")
 
+(defvar mykie:precheck-function
+  (lambda (condition-name)
+    (pcase condition-name
+      (`mykie:region-conditions     (region-active-p))
+      (`mykie:prefix-arg-conditions current-prefix-arg)
+      (condition-name t)))
+  "Pre-check condition depending on CONDITION-NAME before check the
+CONDITION-NAME's condition. If you add conditions to
+`mykie:group-conditions', then you can add your precheck condition by
+change this variable.
+By default, this function check whether region is active or prefix-arg
+is exists.")
+
 ;; INTERNAL VARIABLES
 (defvar mykie:keymaps nil)
 (defvar mykie:current-state nil)
@@ -431,7 +444,7 @@ You can use `mykie:region-str' variable that have region's string."
                                 if (keywordp arg)
                                 collect arg)
           for conditions in mykie:group-conditions
-          if (mykie:precheck-ok-p conditions) do
+          if (funcall mykie:precheck-function conditions) do
           (loop for keyword in keywords
                 if (mykie:predicate (symbol-value conditions) keyword) do
                 (setq mykie:current-state keyword)
@@ -452,13 +465,6 @@ You can use `mykie:region-str' variable that have region's string."
         (when (and mykie:use-lazy-order
                    (eq target-keyword matched))
           (return target-keyword))))
-
-(defun mykie:precheck-ok-p (name)
-  "Pre-check context depending on NAME before check condition."
-  (pcase name
-    (`mykie:region-conditions     (region-active-p))
-    (`mykie:prefix-arg-conditions current-prefix-arg)
-    (name t)))
 
 (defun mykie:run-hook (direction)
   (case direction
