@@ -157,7 +157,7 @@ contains current minor-mode")
     (and (mykie:ignore-mode-p)
          ;; Return default function
          (plist-get args :default)))
-  "Fallback function that retiring fallback function's symbol.")
+  "Fallback function that returning fallback function's symbol.")
 
 ;; INTERNAL VARIABLES
 (defvar mykie:keymaps nil)
