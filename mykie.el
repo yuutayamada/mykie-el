@@ -86,7 +86,8 @@
 (defvar mykie:group-conditions '(mykie:region-conditions
                                  mykie:prefix-arg-conditions
                                  mykie:normal-conditions)
-  "Conditions group list.")
+  "Mykie will check each condition by this list's order.
+You can add another conditions and pre-check by `mykie:precheck-function'.")
 
 (defvar mykie:use-major-mode-key-override nil
   "If this variable is non-nil, attach mykie's same global key function
