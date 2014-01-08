@@ -50,12 +50,12 @@
 (defvar mykie:region-conditions-base
   '((:region&C-u  . current-prefix-arg)
     (:region&prog . mykie:prog-mode-flag)
-    (:region&err  . (mykie:get-error-state "region&"))
+    (:region&err  . (mykie:error-occur-p))
     ("^:.+-mode$" . (mykie:get-major-mode-state "region&"))
     (:region      . t)))
 
 (defvar mykie:prefix-arg-conditions-base
-  '((:C-u&err     . (mykie:get-error-state "C-u&"))
+  '((:C-u&err     . (mykie:error-occur-p))
     ("^:.+-mode$" . (mykie:get-major-mode-state "C-u&"))
     (:C-u&prog    . mykie:prog-mode-flag)
     (:C-u&email   . (mykie:get-thing-state 'email :prefix "C-u&"))
@@ -70,7 +70,7 @@
 
 (defvar mykie:normal-conditions-base
   '((:repeat      . (mykie:repeat-p))
-    (:err         . (mykie:get-error-state))
+    (:err         . (mykie:error-occur-p))
     ("^:.+-mode$" . (mykie:get-major-mode-state))
     (:prog        . mykie:prog-mode-flag)
     (:comment     . (mykie:get-comment/string-state))
@@ -342,13 +342,10 @@ result(i.e., email address or url) after call this function."
                                 (if (bobp) (point) (1- (point))))))
     :comment))
 
-(defun mykie:get-error-state (&optional prefix)
-  "Return :err, :C-u&err or :region&err if `flycheck-current-errors' or
-`flymake-err-info' is non-nil.
-You can specify \"C-u&\" or \"region&\" to the PREFIX."
-  (when (or (bound-and-true-p flymake-err-info)
-            (bound-and-true-p flycheck-current-errors))
-    (mykie:concat-prefix-if-exist 'err prefix)))
+(defun mykie:error-occur-p  ()
+  "Return non-nil if `flycheck-current-errors' or `flymake-err-info' is non-nil."
+  (or (bound-and-true-p flymake-err-info)
+      (bound-and-true-p flycheck-current-errors)))
 
 (defun mykie:get-major-mode-state (&optional prefix)
   "Return :major-mode, :C-u&major-mode or :region&major-mode if
