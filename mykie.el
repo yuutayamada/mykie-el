@@ -446,11 +446,18 @@ You can use `mykie:region-str' variable that have region's string."
                                 collect arg)
           for conditions in mykie:group-conditions
           if (funcall mykie:precheck-function conditions) do
-          (loop for keyword in keywords
-                if (mykie:predicate (symbol-value conditions) keyword) do
-                (setq mykie:current-state keyword)
-                (mykie:execute (plist-get args keyword))
-                (throw 'done 'done))
+          (loop with conds = (symbol-value conditions)
+                for keyword in keywords
+                if (and (loop for (expect . c) in conds
+                              if (or (eq expect keyword)
+                                     (and (stringp expect)
+                                          (string-match
+                                           expect (symbol-name keyword))))
+                              do (return t))
+                        (mykie:predicate conds keyword))
+                do (progn (setq mykie:current-state keyword)
+                          (mykie:execute (plist-get args keyword))
+                          (throw 'done 'done)))
           finally (mykie:execute (or (plist-get args :default)
                                      (plist-get args t)))))
   (unless (mykie:repeat-p)
