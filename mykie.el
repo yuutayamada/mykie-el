@@ -430,8 +430,7 @@ You can use `mykie:region-str' variable that have region's string."
                               if (keywordp arg)
                               collect arg)
         for conditions in mykie:group-conditions
-        for cond-str = (symbol-name conditions)
-        if (mykie:precheck-ok-p cond-str)
+        if (mykie:precheck-ok-p conditions)
         do (when (eq 'done (mykie:iter args (symbol-value conditions) keywords))
              (return)) ; exit from loop macro
         finally (mykie:execute (or (plist-get args :default)
@@ -457,17 +456,12 @@ You can use `mykie:region-str' variable that have region's string."
                    (eq target-keyword matched))
           (return target-keyword))))
 
-(defun mykie:precheck-ok-p (cond-str)
-  "Pre-check condition depending on state.
-If COND-STR is containing \"mykie:region\" then check whether region is active.
-If COND-STR is containing \"mykie:prefix-arg\" then check
-`current-prefix-arg' is non-nil. Otherwise check whether containing
-\"mykie:normal\"."
-  (or (and (region-active-p)
-           (string-match "^mykie:region" cond-str))
-      (and current-prefix-arg
-           (string-match "^mykie:prefix-arg" cond-str))
-      (string-match "^mykie:normal" cond-str)))
+(defun mykie:precheck-ok-p (name)
+  "Pre-check context depending on NAME before check condition."
+  (pcase name
+    (`mykie:region-conditions     (region-active-p))
+    (`mykie:prefix-arg-conditions current-prefix-arg)
+    (name t)))
 
 (defun mykie:run-hook (direction)
   (case direction
