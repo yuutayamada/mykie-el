@@ -47,14 +47,14 @@
 (eval-when-compile (require 'cl))
 
 ;; CUSTOMIZE VARIABLE
-(defvar mykie:region-conditions-base
+(defvar mykie:region-conditions
   '((:region&C-u  . current-prefix-arg)
     (:region&prog . mykie:prog-mode-flag)
     (:region&err  . (mykie:error-occur-p))
     ("^:.+-mode$" . (mykie:get-major-mode-state "region&"))
     (:region      . t)))
 
-(defvar mykie:prefix-arg-conditions-base
+(defvar mykie:prefix-arg-conditions
   '((:C-u&err     . (mykie:error-occur-p))
     ("^:.+-mode$" . (mykie:get-major-mode-state "C-u&"))
     (:C-u&prog    . mykie:prog-mode-flag)
@@ -68,7 +68,7 @@
     ;; Use :C-u if C-u*N isn't exists
     (:C-u         . t)))
 
-(defvar mykie:normal-conditions-base
+(defvar mykie:normal-conditions
   '((:repeat      . (mykie:repeat-p))
     (:err         . (mykie:error-occur-p))
     ("^:.+-mode$" . (mykie:get-major-mode-state))
@@ -83,24 +83,10 @@
     (:eolp        . (eolp))
     (:readonly    . buffer-read-only)))
 
-(defvar mykie:before-user-region-conditions '())
-(defvar mykie:after-user-region-conditions '())
-(defvar mykie:before-user-prefix-arg-conditions '())
-(defvar mykie:after-user-prefix-arg-conditions '())
-(defvar mykie:before-user-normal-conditions '())
-(defvar mykie:after-user-normal-conditions '())
-
-(defvar mykie:region-conditions)
-(defvar mykie:prefix-arg-conditions)
-(defvar mykie:normal-conditions)
-
-(defvar mykie:conditions '()
-  "This variable is evaluated in mykie's loop by each the when statement.
-Then if the when statement is match, return value(like :C-u) and then
-same keyword's function that you are specified is evaluated.
-Note: Order is important. Above list element have more priority than
-below elements. If you dislike :repeat's priority, then you can change
-this behavior by this variable.")
+(defvar mykie:group-conditions '(mykie:region-conditions
+                                 mykie:prefix-arg-conditions
+                                 mykie:normal-conditions)
+  "Conditions group list.")
 
 (defvar mykie:use-major-mode-key-override nil
   "If this variable is non-nil, attach mykie's same global key function
@@ -377,21 +363,6 @@ then check whether minor-mode list match current `minor-mode-list'."
             do (return t))))
 
 (defun mykie:initialize ()
-  (setq mykie:region-conditions
-        (append mykie:before-user-region-conditions
-                mykie:region-conditions-base
-                mykie:after-user-region-conditions)
-        mykie:prefix-arg-conditions
-        (append mykie:before-user-prefix-arg-conditions
-                mykie:prefix-arg-conditions-base
-                mykie:after-user-prefix-arg-conditions)
-        mykie:normal-conditions
-        (append mykie:before-user-normal-conditions
-                mykie:normal-conditions-base
-                mykie:after-user-normal-conditions))
-  (setq mykie:conditions '(mykie:region-conditions
-                           mykie:prefix-arg-conditions
-                           mykie:normal-conditions))
   (if mykie:use-major-mode-key-override
       (add-hook  'change-major-mode-after-body-hook 'mykie:attach-mykie-func-to)
     (remove-hook 'change-major-mode-after-body-hook 'mykie:attach-mykie-func-to)))
@@ -458,7 +429,7 @@ You can use `mykie:region-str' variable that have region's string."
         with keywords = (loop for arg in args
                               if (keywordp arg)
                               collect arg)
-        for conditions in mykie:conditions
+        for conditions in mykie:group-conditions
         for cond-str = (symbol-name conditions)
         if (mykie:precheck-ok-p cond-str)
         do (when (eq 'done (mykie:iter args (symbol-value conditions) keywords))
@@ -661,7 +632,7 @@ Examples:
        (funcall set-keys 'mykie:define-key-with-self-key))
       (t (funcall set-keys 'mykie:define-key-core)))))
 
-(unless mykie:conditions
+(when mykie:use-major-mode-key-override
   (mykie:initialize))
 
 (provide 'mykie)
