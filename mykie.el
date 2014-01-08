@@ -355,14 +355,6 @@ call `mykie' function."
 ;; Backward compatibility
 (defalias 'mykie:get-C-u-keyword 'mykie:get-prefix-arg-state)
 
-(defun mykie:get-prog-mode-state (&optional prefix)
-  "Return :prog, :C-u&prog or :region&prog state if current buffer is
-buffer that related programming. You can specify \"C-u&\" or
-\"region&\" to PREFIX. You can use this function from Emacs 24.
-Because this function utilize `prog-mode-hook'."
-  (when mykie:prog-mode-flag
-    (mykie:concat-prefix-if-exist 'prog prefix)))
-
 (defun mykie:get-skk-state ()
   "Return SKK(simple kana kanji)'s state.
 If `on'(▽) mode then return :skk-on.
@@ -371,13 +363,6 @@ If `active'(▼) mode then return :skk-active."
     (case (bound-and-true-p skk-henkan-mode)
       (active :skk-active)
       (on     :skk-on))))
-
-(defun mykie:major-mode-key-exist-p (args)
-  "Return function symbol if same key as the major-mode's key exists."
-  (destructuring-bind (key . keymap) (plist-get args :key-info)
-    (lookup-key
-     (symbol-value (intern (concat (symbol-name major-mode) "-map")))
-     (kbd key))))
 
 (defun mykie:ignore-mode-p ()
   "Return non-nil if matched specified modes.
