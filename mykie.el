@@ -97,7 +97,7 @@ You can specify 'both, 'global, 'self or t to this variable.
 'self means do override self-insert-keys only.
 t means same as 'self. See also `mykie:attach-mykie-func-to'")
 
-(defvar mykie:use-lazy-order nil
+(defvar mykie:use-lazy-order t
   "If this variable is non-nil, you can change execution order when
   you register key-bindings.
 This function is convenience if you want to change keybind order by each keybind.
