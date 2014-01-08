@@ -500,7 +500,8 @@ You can use `mykie:region-str' variable that have region's string."
         if (mykie:precheck-ok-p cond-str)
         do (when (eq 'done (mykie:iter args (symbol-value conditions) keywords))
              (return)) ; exit from loop macro
-        finally (mykie:execute (plist-get args :default)))
+        finally (mykie:execute (or (plist-get args :default)
+                                   (plist-get args t))))
   (unless (mykie:repeat-p)
     (setq mykie:current-point (point))))
 
