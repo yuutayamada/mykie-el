@@ -262,7 +262,7 @@ The MODE is mode name's symbol such as 'emacs-lisp-mode."
        (attach-func
         (lambda (keys)
           (loop with keymap-name = (concat (symbol-name mode) "-map")
-                with keymap      = (eval (intern keymap-name))
+                with keymap      = (symbol-value (intern keymap-name))
                 for (key args) in keys
                 for mode-func = (lookup-key keymap key)
                 if (and (keymapp keymap)
@@ -398,7 +398,7 @@ If `active'(▼) mode then return :skk-active."
   "Return function symbol if same key as the major-mode's key exists."
   (destructuring-bind (key . keymap) (plist-get args :key-info)
     (lookup-key
-     (eval (intern (concat (symbol-name major-mode) "-map")))
+     (symbol-value (intern (concat (symbol-name major-mode) "-map")))
      (kbd key))))
 
 (defun mykie:ignore-mode-p ()
@@ -676,7 +676,7 @@ Examples:
                    (loop with key-and-prop = '()
                          with last = (1- (length args))
                          with keymap-name = (symbol-name keymap-sym)
-                         with keymap = (eval keymap-sym)
+                         with keymap = (symbol-value keymap-sym)
                          for i from 0 to last
                          for next = (1+ i)
                          for key-or-prop = (nth i args)
