@@ -446,13 +446,16 @@ You can use `mykie:region-str' variable that have region's string."
   (loop with cond-len = (1- (length conditions))
         for i from 0 to (1- (length args)) by 2
         for keyword = (nth i args)
-        if (loop for j from 0 to cond-len
-                 for expect = (car (nth j conditions))
-                 if (or (eq expect keyword)
-                        (and (stringp expect)
-                             (string-match
-                              expect (symbol-name keyword))))
-                 do (return (nth j conditions)))
+        if (or (eq :default keyword)
+               (eq t        keyword))
+        do '() ; do nothing
+        else if (loop for j from 0 to cond-len
+                      for expect = (car (nth j conditions))
+                      if (or (eq expect keyword)
+                             (and (stringp expect)
+                                  (string-match
+                                   expect (symbol-name keyword))))
+                      do (return (nth j conditions)))
         do (when (eq keyword (mykie:check it))
              (return keyword))))
 
