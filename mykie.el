@@ -441,30 +441,34 @@ If you set t then deactivate region in both cases.
 You can use `mykie:region-str' variable that have region's string."
   (catch 'done
     (loop initially (when (eq 'exit (mykie:init args)) (return))
-          with keywords = (loop for arg in args
-                                if (and (keywordp arg)
-                                        (not (eq :default arg)))
-                                collect arg)
-          for conditions in mykie:group-conditions
-          if (funcall mykie:precheck-function conditions) do
-          (loop with conds = (symbol-value conditions)
-                for keyword in keywords
-                if (and (loop for (expect . c) in conds
-                              if (or (eq expect keyword)
-                                     (and (stringp expect)
-                                          (string-match
-                                           expect (symbol-name keyword))))
-                              do (return t))
-                        (mykie:predicate conds keyword))
-                do (progn (setq mykie:current-state keyword)
-                          (mykie:execute (plist-get args keyword))
-                          (throw 'done 'done)))
+          for conditions-sym in mykie:group-conditions
+          for conditions = (symbol-value conditions-sym)
+          if (and (funcall mykie:precheck-function conditions-sym)
+                  (mykie:by-lazy-order args conditions))
+          do (progn (setq mykie:current-state it)
+                    (mykie:execute (plist-get args it))
+                    (throw 'done 'done))
           finally (mykie:execute (or (plist-get args :default)
                                      (plist-get args t)))))
   (unless (mykie:repeat-p)
     (setq mykie:current-point (point))))
 
-(defun mykie:predicate (predicates target-keyword)
+(defun mykie:by-lazy-order (args conditions)
+  (loop with keywords = (loop for arg in args
+                              if (and (keywordp arg)
+                                      (not (eq :default arg)))
+                              collect arg)
+        for keyword in keywords
+        if (and (loop for (expect . c) in conditions
+                      if (or (eq expect keyword)
+                             (and (stringp expect)
+                                  (string-match
+                                   expect (symbol-name keyword))))
+                      do (return t))
+                (mykie:predicate conditions keyword))
+        do (return keyword)))
+
+(defun mykie:predicate (predicates &optional target-keyword)
   (loop with matched
         for predicate in predicates
         for expect-keyword = (car predicate)
