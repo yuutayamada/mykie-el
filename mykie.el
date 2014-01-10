@@ -452,9 +452,20 @@ You can use `mykie:region-str' variable that have region's string."
                         (and (stringp expect)
                              (string-match
                               expect (symbol-name keyword))))
-                 do (return (list (nth j conditions))))
-        do (when (mykie:predicate it keyword)
+                 do (return (nth j conditions)))
+        do (when (eq keyword (mykie:check it))
              (return keyword))))
+
+(defun mykie:check (kw-and-condition)
+  "Return keyword if checking condition is succeed.
+If condition's result is keyword, return the value.
+Otherwise return KW-AND-CONDITION's first element."
+  (lexical-let ((keyword (car kw-and-condition))
+                (result  (eval (cdr kw-and-condition))))
+    (when result
+      (if (keywordp result)
+          result
+        keyword))))
 
 (defun mykie:predicate (predicates &optional target-keyword)
   (loop for predicate in predicates
