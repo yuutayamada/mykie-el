@@ -98,7 +98,7 @@ You can specify 'both, 'global, 'self or t to this variable.
 'self means do override self-insert-keys only.
 t means same as 'self. See also `mykie:attach-mykie-func-to'")
 
-(defvar mykie:use-lazy-order t
+(defvar mykie:use-fuzzy-order t
   "If this variable is non-nil, you can change execution order when
   you register key-bindings.
 This function is convenience if you want to change keybind order by each keybind.
@@ -444,8 +444,8 @@ You can use `mykie:region-str' variable that have region's string."
           for conditions-sym in mykie:group-conditions
           for conditions = (symbol-value conditions-sym)
           if (and (funcall mykie:precheck-function conditions-sym)
-                  (if mykie:use-lazy-order
-                      (mykie:by-lazy-order args conditions)
+                  (if mykie:use-fuzzy-order
+                      (mykie:by-fuzzy-order args conditions)
                     (mykie:predicate conditions)))
           do (progn (setq mykie:current-state it)
                     (mykie:execute (plist-get args it))
@@ -455,7 +455,7 @@ You can use `mykie:region-str' variable that have region's string."
   (unless (mykie:repeat-p)
     (setq mykie:current-point (point))))
 
-(defun mykie:by-lazy-order (args conditions)
+(defun mykie:by-fuzzy-order (args conditions)
   (loop with keywords = (loop for arg in args
                               if (and (keywordp arg)
                                       (not (eq :default arg)))
@@ -477,9 +477,9 @@ You can use `mykie:region-str' variable that have region's string."
         if (eval pred) do ; TODO: delete needless evel
         (when (stringp expect-keyword)
           (setq expect-keyword it))
-        (when (or (and mykie:use-lazy-order
+        (when (or (and mykie:use-fuzzy-order
                        (eq target-keyword expect-keyword))
-                  (and (null mykie:use-lazy-order)
+                  (and (null mykie:use-fuzzy-order)
                        (plist-get mykie:current-args expect-keyword)))
           (return expect-keyword))))
 
