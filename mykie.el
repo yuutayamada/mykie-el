@@ -442,7 +442,8 @@ You can use `mykie:region-str' variable that have region's string."
   (catch 'done
     (loop initially (when (eq 'exit (mykie:init args)) (return))
           with keywords = (loop for arg in args
-                                if (keywordp arg)
+                                if (and (keywordp arg)
+                                        (not (eq :default arg)))
                                 collect arg)
           for conditions in mykie:group-conditions
           if (funcall mykie:precheck-function conditions) do
