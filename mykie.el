@@ -460,15 +460,17 @@ You can use `mykie:region-str' variable that have region's string."
                               if (and (keywordp arg)
                                       (not (eq :default arg)))
                               collect arg)
+        with cond-len = (1- (length conditions))
         for keyword in keywords
-        if (and (loop for (expect . c) in conditions
-                      if (or (eq expect keyword)
-                             (and (stringp expect)
-                                  (string-match
-                                   expect (symbol-name keyword))))
-                      do (return t))
-                (mykie:predicate conditions keyword))
-        do (return keyword)))
+        if (loop for i from 0 to cond-len
+                 for expect = (car (nth i conditions))
+                 if (or (eq expect keyword)
+                        (and (stringp expect)
+                             (string-match
+                              expect (symbol-name keyword))))
+                 do (return (list (nth i conditions))))
+        do (when (mykie:predicate it keyword)
+             (return keyword))))
 
 (defun mykie:predicate (predicates &optional target-keyword)
   (loop for predicate in predicates
