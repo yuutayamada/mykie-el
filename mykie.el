@@ -444,7 +444,9 @@ You can use `mykie:region-str' variable that have region's string."
           for conditions-sym in mykie:group-conditions
           for conditions = (symbol-value conditions-sym)
           if (and (funcall mykie:precheck-function conditions-sym)
-                  (mykie:by-lazy-order args conditions))
+                  (if mykie:use-lazy-order
+                      (mykie:by-lazy-order args conditions)
+                    (mykie:predicate conditions)))
           do (progn (setq mykie:current-state it)
                     (mykie:execute (plist-get args it))
                     (throw 'done 'done))
@@ -475,9 +477,11 @@ You can use `mykie:region-str' variable that have region's string."
         for pred = (cdr predicate)
         if (eval pred) do ; TODO: delete needless evel
         (setq matched (if (stringp expect-keyword) it expect-keyword))
-        (when (and mykie:use-lazy-order
-                   (eq target-keyword matched))
-          (return target-keyword))))
+        (when (or (and mykie:use-lazy-order
+                       (eq target-keyword matched))
+                  (and (null mykie:use-lazy-order)
+                       (plist-get mykie:current-args matched)))
+          (return (or target-keyword matched)))))
 
 (defun mykie:run-hook (direction)
   (case direction
