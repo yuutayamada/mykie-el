@@ -136,9 +136,9 @@ contains current minor-mode")
           (case mykie:current-state ((:region :region&C-u) t)))))
 
 (defvar mykie:make-funcname-function
-  (lambda (args mykie:keymaps keymap key &optional keymap-name)
+  (lambda (args keymap key &optional keymap-name)
     (intern (format
-             "mykie:%s:%s:%s:%s"
+             "mykie:%s:%s:%s"
              (or keymap-name "")
              (replace-regexp-in-string
               " " "_"
@@ -146,12 +146,7 @@ contains current minor-mode")
              ;; Some programs check command name by
              ;; (string-match "self-insert-command" command-name)
              (if (eq (plist-get args :default) 'self-insert-command)
-                 "self-insert-command" "key")
-             ;; find keymap index
-             (loop for k in mykie:keymaps
-                   for i from 0
-                   if (eq k keymap)
-                   return (- (length mykie:keymaps) i))))))
+                 "self-insert-command" "key")))))
 
 (defvar mykie:get-fallback-function
   (lambda (args)
@@ -174,7 +169,6 @@ By default, this function check whether region is active or prefix-arg
 is exists.")
 
 ;; INTERNAL VARIABLES
-(defvar mykie:keymaps nil)
 (defvar mykie:current-state nil)
 (defvar mykie:current-args '())
 (defvar mykie:current-point "")
@@ -511,12 +505,11 @@ Example:
 (put 'mykie:define-key 'lisp-indent-function 2)
 
 (defun mykie:define-key-core (keymap-name keymap key args)
-  (unless (memq keymap mykie:keymaps) (push keymap mykie:keymaps))
   (lexical-let* ((key (mykie:format-key key))
                  (args (append args `(:key-info (,key . ,keymap-name))))
                  ;; Workaround: Assign command name
                  (sym (funcall mykie:make-funcname-function
-                               args mykie:keymaps keymap key keymap-name)))
+                               args keymap key keymap-name)))
     (when (and (equal "global-map" keymap-name)
                (< 1 (length (key-description key))))
       (add-to-list 'mykie:global-keys `(,key ,args)))
