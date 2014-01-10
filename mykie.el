@@ -232,16 +232,14 @@ Example
              (keyboard-quit)))"
   (mykie:run-hook 'before)
   (run-hooks 'pre-command-hook)
-  (cond
-   ((commandp func)
-    ;; Do not use `setq' because the command loop overrides
-    ;; `last-command', so use timer here.
-    (run-with-timer 0 nil 'set 'last-command func)
-    (funcall 'call-interactively func))
-   ((functionp func)
-    (funcall func))
-   ((listp func)
-    (funcall 'eval `(progn ,func))))
+  (typecase func
+    (command
+     ;; Do not use `setq' because the command loop overrides
+     ;; `last-command', so use timer here.
+     (run-with-timer 0 nil 'set 'last-command func)
+     (funcall 'call-interactively func))
+    (function (funcall func))
+    (list     (funcall 'eval `(progn ,func))))
   (run-hooks 'post-command-hook)
   (mykie:run-hook 'after))
 
