@@ -471,17 +471,17 @@ You can use `mykie:region-str' variable that have region's string."
         do (return keyword)))
 
 (defun mykie:predicate (predicates &optional target-keyword)
-  (loop with matched
-        for predicate in predicates
+  (loop for predicate in predicates
         for expect-keyword = (car predicate)
         for pred = (cdr predicate)
         if (eval pred) do ; TODO: delete needless evel
-        (setq matched (if (stringp expect-keyword) it expect-keyword))
+        (when (stringp expect-keyword)
+          (setq expect-keyword it))
         (when (or (and mykie:use-lazy-order
-                       (eq target-keyword matched))
+                       (eq target-keyword expect-keyword))
                   (and (null mykie:use-lazy-order)
-                       (plist-get mykie:current-args matched)))
-          (return (or target-keyword matched)))))
+                       (plist-get mykie:current-args expect-keyword)))
+          (return expect-keyword))))
 
 (defun mykie:run-hook (direction)
   (case direction
