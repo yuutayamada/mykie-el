@@ -300,16 +300,8 @@ If return value is non-nil, then save the value to `mykie:current-thing'."
   (mykie:aif (thing-at-point thing)
       (setq mykie:current-thing it)))
 
-(defun mykie:concat-prefix-if-exist (state prefix)
-  (lexical-let
-      ((target-state (intern (concat ":" prefix (symbol-name state)))))
-    (when (and (plist-get mykie:current-args target-state)
-               (or (not prefix)
-                   (and prefix (equal "C-u&"    prefix)
-                        current-prefix-arg)
-                   (and prefix (equal "region&" prefix)
-                        (region-active-p))))
-      target-state)))
+(defun mykie:concat-prefix (state prefix)
+  (intern (concat ":" prefix (symbol-name state))))
 
 (defun mykie:get-comment/string-state ()
   "Return :comment if current point is comment or string face."
@@ -329,7 +321,9 @@ condition if you specified prefix(whether current-prefix-arg or region
 active).
 The major-mode replaced to `major-mode' name.
 You can specify \"C-u&\" or \"region&\" to the PREFIX."
-  (mykie:concat-prefix-if-exist major-mode prefix))
+  (lexical-let ((keyword (mykie:concat-prefix major-mode prefix)))
+    (when (plist-get mykie:current-args keyword)
+      keyword)))
 
 (defun mykie:get-prefix-arg-state ()
   "Return keyword like :C-u, :C-*N or :M-N.
