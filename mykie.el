@@ -433,7 +433,7 @@ You can use `mykie:region-str' variable that have region's string."
         if (and (funcall mykie:precheck-function conditions-sym)
                 (if mykie:use-fuzzy-order
                     (mykie:by-fuzzy-order args conditions)
-                  (mykie:predicate conditions)))
+                  (mykie:by-condition-order conditions)))
         do (progn (setq mykie:current-state it)
                   (mykie:execute (plist-get args it))
                   (return))
@@ -467,7 +467,7 @@ Otherwise return KW-AND-CONDITION's first element."
           result
         keyword))))
 
-(defun mykie:predicate (predicates)
+(defun mykie:by-condition-order (predicates)
   (loop for predicate in predicates
         if (and (eq :default (car predicate))
                 (eq t (car predicate)))
