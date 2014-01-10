@@ -25,11 +25,11 @@
 ;; For example:
 ;; (mykie:set-keys global-map ; <- you can specify nil to bind to global-map
 ;;   "C-j" ; You don't need kbd macro
-;;   :default 'newline-and-indent   ; <- normal behavior
-;;   :region  'query-replace-regexp ; <- do query-replace-regexp in region
+;;   :default newline-and-indent   ; <- normal behavior
+;;   :region  query-replace-regexp ; <- do query-replace-regexp in region
 ;;   "C-a"
-;;   :default 'beginning-of-line
-;;   :C-u     '(message "hello") ; <- C-u + C-a, then you can see hello
+;;   :default beginning-of-line
+;;   :C-u     (message "hello") ; <- C-u + C-a, then you can see hello
 ;;   ;; You can add more keybinds
 ;;   ;; ...
 ;;   )
@@ -39,8 +39,8 @@
 ;;
 ;; There are other way to bind a keybind:
 ;; (mykie:global-set-key "C-j" ; You don't need kbd macro
-;;   :default 'newline-and-indent
-;;   :region 'query-replace-regexp)
+;;   :default newline-and-indent
+;;   :region query-replace-regexp)
 ;;
 ;; You can see more example : https://github.com/yuutayamada/mykie-el
 ;;; Code:
@@ -52,7 +52,10 @@
     (:region&prog . mykie:prog-mode-flag)
     (:region&err  . (mykie:error-occur-p))
     ("^:.+-mode$" . (mykie:get-major-mode-state "region&"))
-    (:region      . t)))
+    (:region      . t))
+  "This variable is used at `mykie' function.
+You don't need to contain region checking function. Mykie will check
+whether region is active or not before check this variable.")
 
 (defvar mykie:prefix-arg-conditions
   '((:C-u&err     . (mykie:error-occur-p))
@@ -66,7 +69,10 @@
     (:C-u&eolp    . (eolp))
     ("^:\\(M-\\|C-u\\*\\)[0-9]+$" . (mykie:get-prefix-arg-state))
     ;; Use :C-u if C-u*N isn't exists
-    (:C-u         . t)))
+    (:C-u         . t))
+  "This variable is used at `mykie' function.
+You don't need to contain prefix-arg checking function. Mykie will check
+whether current-prefix-arg is non-nil or not before check this variable.")
 
 (defvar mykie:normal-conditions
   '((:repeat      . (mykie:repeat-p))
@@ -81,7 +87,8 @@
     (:eobp        . (eobp))
     (:bolp        . (bolp))
     (:eolp        . (eolp))
-    (:readonly    . buffer-read-only)))
+    (:readonly    . buffer-read-only))
+  "This variable is used at `mykie' function.")
 
 (defvar mykie:group-conditions '(mykie:region-conditions
                                  mykie:prefix-arg-conditions
@@ -100,23 +107,18 @@ t means same as 'self. See also `mykie:attach-mykie-func-to'")
 
 (defvar mykie:use-fuzzy-order t
   "If this variable is non-nil, you can change execution order when
-  you register key-bindings.
-This function is convenience if you want to change keybind order by each keybind.
+you register key-bindings. This function is convenience if you want to
+change keybind order by each keybind.
+
 For example:
- (mykie:set-keys nil
-   \"C-0\"
-   :default '(message \"hi\")
-   :C-u*2   '(message \"howdy\")
-   :C-u     '(message \"hello\")
-   :C-u*3   '(message \"hey\") ; <- you can't see
-   \"C-1\"
-   :default '(message \"hi\")
-   :C-u*3   '(message \"howdy\")
-   :C-u     '(message \"hello\")
-   :C-u*2   '(message \"hey\")) ; <- you can't see
-This example you never be able to see hey message. Because `mykie' is prior
-above keyword and function pair if you set non-nil to this variable.
-Note: you can change order only same section's conditions.
+ (mykie:global-set-key \"C-j\"
+   :default  new-line-and-indent
+   :C-u&url  browse-url-at-point
+   :C-u&eolp (fill-region (point-at-bol) (point-at-eol))
+
+If you set above setting, then mykie is prior :C-u&url than :C-u&eolp.
+If you want change the order, swap order between :C-u&url and
+:C-u&eolp. Note: you can change order only same group conditions.
 i.e., you can't change order region's function and C-u's function.")
 
 (defvar mykie:major-mode-ignore-list '()
@@ -225,9 +227,9 @@ Example
  (mykie:loop
   \"j\" (lambda ()
         (newline-and-indent))
-  \"m\" 'newline
-  \"g\" '(if current-prefix-arg
-             (keyboard-quit)))"
+  \"m\" newline
+  \"g\" (if current-prefix-arg
+            (keyboard-quit)))"
   (mykie:run-hook 'before)
   (run-hooks 'pre-command-hook)
   (typecase func
@@ -404,25 +406,66 @@ args with non-nil after do mykie's command."
 (defmacro mykie (&rest args)
   "Call function you are set functions.
 You can set below keyword by default:
+
 *Functions*
-:default - this is default function
-:bolp - call this if pushed key at bolp
-:eolp - call this if pushed key at eolp
-:C-u - call this  if you pushed this key after C-u
-:C-u&bolp - call this if you pushed key after C-u and the point was bolp
-:C-u&eolp - call this if you pushed key after C-u and the point was eolp
-:region - call this if you pushed key when you are selecting region
-:region&C-u - similar to above but call this if you pushed C-u before
-:repeat - call this if you pushed key at same point
+ :default or t      | call this if conditions aren't matched all conditions
+ :C-u               | Call this if you pushed C-u key before pushing the key
+ :C-u*N             | Call this if you pushed N times of C-u(replace N to number)
+ :M-N               | Call this if you pushed such as M-1(replace N to number)
+ :region            | Call this if you are selecting region
+ :region&C-u        | Call this if you satisfied :region & :C-u condition
+ :repeat            | Call this if you repeat same command at same point
+ :bolp              | Call this if current point is beginning of line
+ :eolp              | Call this if current point is end of line
+ :bobp              | Call this if current point is beginning of buffer
+ :eobp              | Call this if current point is end of buffer
+ :C-u&bolp          | Call this if you satisfied :C-u & :bolp
+ :C-u&eolp          | Call this if you satisfied :C-u & :eolp
+ :C-u&bobp          | Call this if you satisfied :C-u & :bobp
+ :C-u&eobp          | Call this if you satisfied :C-u & :eobp
+ :email             | Call this if current point matched (thing-at-point 'email)
+ :C-u&email         | Call this if you satisfied :C-u & :email
+ :url               | Call this if current point matched (thing-at-point 'url)
+ :C-u&url           | Call this if you satisfied :C-u & :url
+ :MAJOR-MODE        | Call this if :MAJOR-MODE matched major-mode.
+ :C-u&MAJOR-MODE    | Call this if you satisfied :C-u & :MAJOR-MODE
+ :region&MAJOR-MODE | Call this if you satisfied :region & :MAJOR-MODE
+ :prog              | Call this if current buffer is related `prog-mode'
+ :C-u&prog          | Call this if you satisfied :C-u & :prog
+ :region&prog       | Call this if you satisfied :region & :prog
+ :err               | Call this if error is exists of flymake or flycheck.
+ :C-u&err           | Call this if you satisfied :C-u & :err
+ :region&err        | Call this if you satisfied :region & :err
+ :minibuff          | Call this if current point is in minibuffer
+ :readonly          | Call this if current buffer is read-only
+ :comment           | Call this if current point is string or comment face
+
 *Flags*
-:region-handle-flag - you can set 'copy and 'kill
-If you set 'kill then region's string is killed.
-If you set 'copy then region's string is copied.
-:deactivate-region - deactivate region after region command execution
-If you set 'region then deactivate region when you did not push C-u.
-If you set 'region&C-u then deactivate region when you pushed C-u.
-If you set t then deactivate region in both cases.
-You can use `mykie:region-str' variable that have region's string."
+ :clone - Clone mykie's functions to other KEY.
+   This function is convenient if you use Emacs either situation
+   terminal and GUI.  Because terminal Emacs can't use partial keybind
+   such as C-;, this keyword can clone same functions to another key
+   without :default function.
+
+ For example:
+ (mykie:global-set-key \"C-;\"
+   :default (message \"foo\")
+   :region  comment-dwim
+   :clone   \";\")
+
+ Above example copy mykie's function to \";\" key without :default.
+
+ :region-handle-flag - you can set 'copy and 'kill
+   If you set 'kill then region's string is killed.
+   If you set 'copy then region's string is copied.
+   And you can use the value by `kill-ring'.
+
+ But you can use `mykie:region-str' variable that have region's string too.
+
+ :deactivate-region - deactivate region after region command execution
+   If you set 'region then deactivate region when you did not push C-u.
+   If you set 'region&C-u then deactivate region when you pushed C-u.
+   If you set t then deactivate region in both cases."
   `(mykie:core (quote ,args)))
 
 (defun mykie:core (args)
@@ -443,6 +486,7 @@ You can use `mykie:region-str' variable that have region's string."
     (setq mykie:current-point (point))))
 
 (defun mykie:by-fuzzy-order (args conditions)
+  "Check CONDITIONS by keyword base that extracted from ARGS."
   (loop with cond-len = (1- (length conditions))
         for i from 0 to (1- (length args)) by 2
         for keyword = (nth i args)
@@ -498,9 +542,9 @@ In other words, `mykie' + `define-key'.
 
 Example:
  (mykie:define-key global-map \"y\"
-   :default 'self-insert-command
-   :region '(message \"%s\" mykie:region-str)
-   :C-u '(message \"C-u y\"))"
+   :default self-insert-command
+   :region (message \"%s\" mykie:region-str)
+   :C-u (message \"C-u y\"))"
   `(mykie:define-key-core
     (symbol-name (quote ,keymap))
     ,keymap ,key ,args))
@@ -552,9 +596,9 @@ In other words, `mykie' + `global-set-key'.
 
 Example:
  (mykie:global-set-key \"z\"
-   :default 'self-insert-command
-   :region '(message \"%s\" mykie:region-str)
-   :C-u '(message \"C-u z\"))"
+   :default self-insert-command
+   :region (message \"%s\" mykie:region-str)
+   :C-u (message \"C-u z\"))"
   `(mykie:define-key-core "global-map" global-map ,key (quote ,args)))
 (put 'mykie:global-set-key 'lisp-indent-function 1)
 
@@ -563,7 +607,7 @@ Example:
 This function register :default `self-insert-command' automatically to ARGS.
 Example:
   (mykie:define-key-with-self-key
-      \"a\" :C-u '(message \"I am C-u\"))"
+      \"a\" :C-u (message \"I am C-u\"))"
   (add-to-list 'mykie:self-insert-keys `(,key ,args))
   (funcall 'mykie:define-key-core "global-map" global-map (mykie:format-key key)
          (append args
@@ -582,30 +626,30 @@ Examples:
   Set keybinds to global-map:
   (mykie:set-keys nil ; You can set 'global or global-map instead of nil too.
     \"C-a\"
-    :default     '(beginning-of-line)
-    :C-u         'mark-whole-buffer
+    :default     (beginning-of-line)
+    :C-u         mark-whole-buffer
     \"C-e\"
-    :default     '(end-of-line)
-    :C-u         '(message \"Hello\"))
+    :default     (end-of-line)
+    :C-u         (message \"Hello\"))
 
   Set keybinds to specific keymap:
   (mykie:set-keys emacs-lisp-mode-map
     \"C-1\"
-    :default '(message \"C-1\")
-    :C-u     '(message \"C-1+C-u\")
+    :default (message \"C-1\")
+    :C-u     (message \"C-1+C-u\")
     \"C-2\"
-    :default '(message \"C-2\")
-    :C-u     '(message \"C-2+C-u\"))
+    :default (message \"C-2\")
+    :C-u     (message \"C-2+C-u\"))
 
   Set keybinds for self-insert-key
   You don't need to specify :default state, it's specified to
   'self-insert-command automatically to it.
   (mykie:set-keys 'with-self-key
    \"a\"
-   :C-u '(message \"called a\")
-   :region 'query-replace-regexp
+   :C-u (message \"called a\")
+   :region query-replace-regexp
    \"b\"
-   :C-u '(message \"called b\"))"
+   :C-u (message \"called b\"))"
   `(let ((order   ,keymap-or-order))
      (if (keymapp ,keymap-or-order)
          (mykie:set-keys-core order (quote ,keymap-or-order) (quote ,args))
