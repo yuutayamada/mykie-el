@@ -472,13 +472,10 @@ You can use `mykie:region-str' variable that have region's string."
           (return expect-keyword))))
 
 (defun mykie:run-hook (direction)
-  (case direction
-    (before
-     (when (funcall mykie:region-func-predicate)
-       (run-hooks 'mykie:region-before-init-hook)))
-    (after
-     (when (funcall mykie:region-func-predicate)
-       (run-hooks 'mykie:region-after-init-hook)))))
+  (when (funcall mykie:region-func-predicate)
+    (case direction
+      (before (run-hooks 'mykie:region-before-init-hook))
+      (after  (run-hooks 'mykie:region-after-init-hook)))))
 
 (defun mykie:format-key (key)
   (typecase key
