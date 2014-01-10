@@ -470,12 +470,13 @@ Otherwise return KW-AND-CONDITION's first element."
           result
         keyword))))
 
-(defun mykie:by-condition-order (predicates)
-  (loop for predicate in predicates
-        if (and (eq :default (car predicate))
-                (eq t (car predicate)))
+(defun mykie:by-condition-order (conditions)
+  "Check CONDITIONS by the CONDITIONS order."
+  (loop for condition in conditions
+        if (and (eq :default (car condition))
+                (eq t (car condition)))
         do '()
-        else if (mykie:check predicate)
+        else if (mykie:check condition)
         do (when (plist-get mykie:current-args it)
              (return it))))
 
