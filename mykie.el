@@ -455,19 +455,16 @@ You can use `mykie:region-str' variable that have region's string."
     (setq mykie:current-point (point))))
 
 (defun mykie:by-fuzzy-order (args conditions)
-  (loop with keywords = (loop for arg in args
-                              if (and (keywordp arg)
-                                      (not (eq :default arg)))
-                              collect arg)
-        with cond-len = (1- (length conditions))
-        for keyword in keywords
-        if (loop for i from 0 to cond-len
-                 for expect = (car (nth i conditions))
+  (loop with cond-len = (1- (length conditions))
+        for i from 0 to (1- (length args)) by 2
+        for keyword = (nth i args)
+        if (loop for j from 0 to cond-len
+                 for expect = (car (nth j conditions))
                  if (or (eq expect keyword)
                         (and (stringp expect)
                              (string-match
                               expect (symbol-name keyword))))
-                 do (return (list (nth i conditions))))
+                 do (return (list (nth j conditions))))
         do (when (mykie:predicate it keyword)
              (return keyword))))
 
