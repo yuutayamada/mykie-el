@@ -467,18 +467,14 @@ Otherwise return KW-AND-CONDITION's first element."
           result
         keyword))))
 
-(defun mykie:predicate (predicates &optional target-keyword)
+(defun mykie:predicate (predicates)
   (loop for predicate in predicates
-        for expect-keyword = (car predicate)
-        for pred = (cdr predicate)
-        if (eval pred) do ; TODO: delete needless evel
-        (when (stringp expect-keyword)
-          (setq expect-keyword it))
-        (when (or (and mykie:use-fuzzy-order
-                       (eq target-keyword expect-keyword))
-                  (and (null mykie:use-fuzzy-order)
-                       (plist-get mykie:current-args expect-keyword)))
-          (return expect-keyword))))
+        if (and (eq :default (car predicate))
+                (eq t (car predicate)))
+        do '()
+        else if (mykie:check predicate)
+        do (when (plist-get mykie:current-args it)
+             (return it))))
 
 (defun mykie:run-hook (direction)
   (when (funcall mykie:region-func-predicate)
