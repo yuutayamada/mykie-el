@@ -439,19 +439,18 @@ If you set 'region then deactivate region when you did not push C-u.
 If you set 'region&C-u then deactivate region when you pushed C-u.
 If you set t then deactivate region in both cases.
 You can use `mykie:region-str' variable that have region's string."
-  (catch 'done
-    (loop initially (when (eq 'exit (mykie:init args)) (return))
-          for conditions-sym in mykie:group-conditions
-          for conditions = (symbol-value conditions-sym)
-          if (and (funcall mykie:precheck-function conditions-sym)
-                  (if mykie:use-fuzzy-order
-                      (mykie:by-fuzzy-order args conditions)
-                    (mykie:predicate conditions)))
-          do (progn (setq mykie:current-state it)
-                    (mykie:execute (plist-get args it))
-                    (throw 'done 'done))
-          finally (mykie:execute (or (plist-get args :default)
-                                     (plist-get args t)))))
+  (loop initially (when (eq 'exit (mykie:init args)) (return))
+        for conditions-sym in mykie:group-conditions
+        for conditions = (symbol-value conditions-sym)
+        if (and (funcall mykie:precheck-function conditions-sym)
+                (if mykie:use-fuzzy-order
+                    (mykie:by-fuzzy-order args conditions)
+                  (mykie:predicate conditions)))
+        do (progn (setq mykie:current-state it)
+                  (mykie:execute (plist-get args it))
+                  (return))
+        finally (mykie:execute (or (plist-get args :default)
+                                   (plist-get args t))))
   (unless (mykie:repeat-p)
     (setq mykie:current-point (point))))
 
