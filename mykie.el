@@ -405,7 +405,7 @@ args with non-nil after do mykie's command."
               (eq      t          deactivation))
       (deactivate-mark))))
 
-(defun* mykie (&rest args &allow-other-keys)
+(defmacro mykie (&rest args)
   "Call function you are set functions.
 You can set below keyword by default:
 *Functions*
@@ -427,6 +427,10 @@ If you set 'region then deactivate region when you did not push C-u.
 If you set 'region&C-u then deactivate region when you pushed C-u.
 If you set t then deactivate region in both cases.
 You can use `mykie:region-str' variable that have region's string."
+  `(mykie:core (quote ,args)))
+
+(defun mykie:core (args)
+  (setq args (if (symbolp args) (symbol-value args) args))
   (loop initially (when (eq 'exit (mykie:init args)) (return))
         for conditions-sym in mykie:group-conditions
         for conditions = (symbol-value conditions-sym)
@@ -507,7 +511,7 @@ Example:
     (when (and (equal "global-map" keymap-name)
                (< 1 (length (key-description key))))
       (add-to-list 'mykie:global-keys `(,key ,args)))
-    (fset sym (lambda () (interactive) (apply 'mykie args)))
+    (fset sym (lambda () (interactive) (funcall 'mykie:core args)))
     (define-key keymap key sym)
     (mykie:aif (plist-get args :clone)
         (mykie:clone-key it args '(:default self-insert-command)))))
