@@ -657,13 +657,16 @@ Examples:
        (mykie:set-keys-core order 'global-map (quote ,args)))))
 (put 'mykie:set-keys 'lisp-indent-function 1)
 
-(defun mykie:set-keys-core (order keymap-sym args)
+(defun mykie:set-keys-core (order keymap-sym args &optional parenthesize)
   (lexical-let*
       ((set-key
         (lambda (key-and-prop &optional keymap-name keymap)
           (lexical-let
-              ((key      (car key-and-prop))
-               (property (cdr key-and-prop)))
+              ((key (car key-and-prop))
+               (property
+                (if parenthesize
+                    (mykie:parse-parenthesized-syntax (cdr key-and-prop))
+                  (cdr key-and-prop))))
             (case order
               (with-self-key
                (mykie:define-key-with-self-key-core key property))
@@ -688,6 +691,50 @@ Examples:
                      (setq key-and-prop nil))))))
     (funcall set-keys)))
 
+(defun mykie:parse-parenthesized-syntax (args)
+  (loop with new-args
+        for (keyword . function) in args
+        collect keyword into new-args
+        if (listp function)
+        collect `(progn ,@function) into new-args
+        else collect function into new-args
+        finally return new-args))
+
+(defmacro mykie:define-key* (keymap key &rest args)
+  "Like `mykie:define-key' but you can use parenthesized syntax.
+For example:
+ (mykie:define-key global-map \"C-j\"
+   (:default (message \"default\")
+             (message \"second line\"))
+   (:C-u     (message \"C-u function\")))"
+  `(mykie:define-key-core
+    (symbol-name (quote ,keymap)) ,keymap ,key
+    (mykie:parse-parenthesized-syntax (quote ,args))))
+(put 'mykie:define-key* 'lisp-indent-function 1)
+
+(defmacro mykie:global-set-key* (key &rest args)
+  "Like `mykie:global-set-key' but you can use parenthesized syntax.
+See also `mykie:define-key*'"
+  `(mykie:define-key-core
+    "global-map" global-map ,key
+    (mykie:parse-parenthesized-syntax (quote ,args))))
+(put 'mykie:global-set-key* 'lisp-indent-function 1)
+
+(defmacro mykie:define-key-with-self-key* (key &rest args)
+  "Like `mykie:define-key-with-self-key' but you can use parenthesized syntax.
+See also `mykie:define-key*'"
+  `(mykie:define-key-with-self-key-core
+    ,key (mykie:parse-parenthesized-syntax (quote ,args))))
+(put 'mykie:define-key-with-self-key* 'lisp-indent-function 1)
+
+(defmacro mykie:set-keys* (keymap-or-order &rest args)
+  "Like `mykie:set-keys' but you can use parenthesized syntax.
+See also `mykie:define-key*'"
+  `(let ((order   ,keymap-or-order))
+     (if (keymapp ,keymap-or-order)
+         (mykie:set-keys-core order (quote ,keymap-or-order) (quote ,args) t)
+       (mykie:set-keys-core order 'global-map (quote ,args) t))))
+(put 'mykie:set-keys* 'lisp-indent-function 1)
 
 (when mykie:use-major-mode-key-override
   (mykie:initialize))
