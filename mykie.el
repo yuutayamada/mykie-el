@@ -710,7 +710,7 @@ Examples:
 (defmacro mykie:define-key* (keymap key &rest args)
   "Like `mykie:define-key' but you can use parenthesized syntax.
 For example:
- (mykie:define-key global-map \"C-j\"
+ (mykie:define-key* global-map \"C-j\"
    (:default (message \"default\")
              (message \"second line\"))
    (:C-u     (message \"C-u function\")))"
