@@ -658,31 +658,36 @@ Examples:
 (put 'mykie:set-keys 'lisp-indent-function 1)
 
 (defun mykie:set-keys-core (order keymap-sym args)
-  (lexical-let
-      ((set-keys (lambda (func)
-                   (loop with key-and-prop = '()
-                         with last = (1- (length args))
-                         with keymap-name = (symbol-name keymap-sym)
-                         with keymap = (symbol-value keymap-sym)
-                         for i from 0 to last
-                         for next = (1+ i)
-                         for key-or-prop = (nth i args)
-                         collect key-or-prop into key-and-prop
-                         if (or (equal i last)
-                                (and (not (eq :clone (nth i args)))
-                                     (typecase (nth next args)
-                                       (string t)
-                                       (vector t))))
-                         do (progn
-                              (case func
-                                (mykie:define-key-core
-                                 (funcall func keymap-name keymap (car key-and-prop) (cdr key-and-prop)))
-                                (t (mykie:define-key-with-self-key-core (car key-and-prop) (cdr key-and-prop))))
-                              (setq key-and-prop nil))))))
-    (case order
-      (with-self-key
-       (funcall set-keys 'mykie:define-key-with-self-key))
-      (t (funcall set-keys 'mykie:define-key-core)))))
+  (lexical-let*
+      ((set-key
+        (lambda (key-and-prop &optional keymap-name keymap)
+          (lexical-let
+              ((key      (car key-and-prop))
+               (property (cdr key-and-prop)))
+            (case order
+              (with-self-key
+               (mykie:define-key-with-self-key-core key property))
+              (t (mykie:define-key-core keymap-name keymap key property))))))
+       (set-keys
+        (lambda ()
+          (loop with key-and-prop = '()
+                with last = (1- (length args))
+                with keymap-name = (symbol-name keymap-sym)
+                with keymap = (symbol-value keymap-sym)
+                for i from 0 to last
+                for next = (1+ i)
+                for key-or-prop = (nth i args)
+                collect key-or-prop into key-and-prop
+                if (or (equal i last)
+                       (and (not (eq :clone (nth i args)))
+                            (typecase (nth next args)
+                              (string t)
+                              (vector t))))
+                do (progn
+                     (funcall set-key key-and-prop keymap-name keymap)
+                     (setq key-and-prop nil))))))
+    (funcall set-keys)))
+
 
 (when mykie:use-major-mode-key-override
   (mykie:initialize))
