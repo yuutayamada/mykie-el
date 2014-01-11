@@ -137,6 +137,16 @@ contains current minor-mode")
      (and (region-active-p)
           (case mykie:current-state ((:region :region&C-u) t)))))
 
+(defvar mykie:default-keywords '(:default t)
+  "Some function using :default keyword. So do not delete :default.
+To change this variable use `add-to-list'.")
+
+(defvar mykie:get-default-function
+  (lambda (args)
+    (loop for i from 0 to (1- (length args)) by 2
+          if (member (nth i args) mykie:default-keywords)
+          do (return (plist-get args (car it))))))
+
 (defvar mykie:make-funcname-function
   (lambda (args keymap key &optional keymap-name)
     (intern (format
@@ -145,14 +155,14 @@ contains current minor-mode")
              (replace-regexp-in-string " " "_" (key-description key))
              ;; Some programs check command name by
              ;; (string-match "self-insert-command" command-name)
-             (if (eq (plist-get args :default) 'self-insert-command)
+             (if (eq (funcall mykie:get-default-function args) 'self-insert-command)
                  "self-insert-command" "key")))))
 
 (defvar mykie:get-fallback-function
   (lambda (args)
     (and (mykie:ignore-mode-p)
          ;; Return default function
-         (plist-get args :default)))
+         (funcall mykie:get-default-function args)))
   "Fallback function that returning fallback function's symbol.")
 
 (defvar mykie:precheck-function
@@ -480,8 +490,7 @@ You can set below keyword by default:
         do (progn (setq mykie:current-state it)
                   (mykie:execute (plist-get args it))
                   (return))
-        finally (mykie:execute (or (plist-get args :default)
-                                   (plist-get args t))))
+        finally (mykie:execute (funcall mykie:get-default-function args)))
   (unless (mykie:repeat-p)
     (setq mykie:current-point (point))))
 
@@ -490,8 +499,7 @@ You can set below keyword by default:
   (loop with cond-len = (1- (length conditions))
         for i from 0 to (1- (length args)) by 2
         for keyword = (nth i args)
-        if (or (eq :default keyword)
-               (eq t        keyword))
+        if (member keyword mykie:default-keywords)
         do '() ; do nothing
         else if (loop for j from 0 to cond-len
                       for expect = (car (nth j conditions))
@@ -517,8 +525,7 @@ Otherwise return KW-AND-CONDITION's first element."
 (defun mykie:by-condition-order (conditions)
   "Check CONDITIONS by the CONDITIONS order."
   (loop for condition in conditions
-        if (and (eq :default (car condition))
-                (eq t (car condition)))
+        if (member (car condition) mykie:default-keywords)
         do '()
         else if (mykie:check condition)
         do (when (plist-get mykie:current-args it)
