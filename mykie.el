@@ -602,22 +602,23 @@ Example:
   `(mykie:define-key-core "global-map" global-map ,key (quote ,args)))
 (put 'mykie:global-set-key 'lisp-indent-function 1)
 
-(defun mykie:define-key-with-self-key (key &rest args)
+(defmacro mykie:define-key-with-self-key (key &rest args)
   "Set self-insert-key(KEY) with `mykie' command.
 This function register :default `self-insert-command' automatically to ARGS.
 Example:
   (mykie:define-key-with-self-key
       \"a\" :C-u (message \"I am C-u\"))"
+  `(mykie:define-key-with-self-key-core ,key (quote ,args)))
+
+(defun mykie:define-key-with-self-key-core (key args)
   (add-to-list 'mykie:self-insert-keys `(,key ,args))
-  (funcall 'mykie:define-key-core "global-map" global-map (mykie:format-key key)
-         (append args
-                 '(:default self-insert-command)
-                 (mykie:aif mykie:major-mode-ignore-list
-                     `(:ignore-major-modes ,it)
-                   nil)
-                 (mykie:aif mykie:minor-mode-ignore-list
-                     `(:ignore-minor-modes ,it)
-                   nil))))
+  (mykie:define-key-core "global-map" global-map (mykie:format-key key)
+                         (append args
+                                 '(:default self-insert-command)
+                                 (mykie:aif mykie:major-mode-ignore-list
+                                     `(:ignore-major-modes ,it))
+                                 (mykie:aif mykie:minor-mode-ignore-list
+                                     `(:ignore-minor-modes ,it)))))
 (put 'mykie:define-key-with-self-key 'lisp-indent-function 1)
 
 (defmacro mykie:set-keys (keymap-or-order &rest args)
@@ -676,7 +677,7 @@ Examples:
                               (case func
                                 (mykie:define-key-core
                                  (funcall func keymap-name keymap (car key-and-prop) (cdr key-and-prop)))
-                                (t (apply func key-and-prop)))
+                                (t (mykie:define-key-with-self-key-core (car key-and-prop) (cdr key-and-prop))))
                               (setq key-and-prop nil))))))
     (case order
       (with-self-key
