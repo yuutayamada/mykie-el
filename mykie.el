@@ -57,6 +57,12 @@
 You don't need to contain region checking function. Mykie will check
 whether region is active or not before check this variable.")
 
+(defvar mykie:prefix-arg-conditions*
+  '(("^:\\(M-\\|C-u\\*\\)[0-9]+$" . (mykie:get-prefix-arg-state)))
+  "This variable is used at `mykie' function.
+Mykie will check whether current-prefix-arg is non-nil
+and make sure user pushed multiple time C-u more than one time.")
+
 (defvar mykie:prefix-arg-conditions
   '((:C-u&err     . (mykie:error-occur-p))
     ("^:.+-mode$" . (mykie:get-major-mode-state "C-u&"))
@@ -67,8 +73,6 @@ whether region is active or not before check this variable.")
     (:C-u&eobp    . (eobp))
     (:C-u&bolp    . (bolp))
     (:C-u&eolp    . (eolp))
-    ("^:\\(M-\\|C-u\\*\\)[0-9]+$" . (mykie:get-prefix-arg-state))
-    ;; Use :C-u if C-u*N isn't exists
     (:C-u         . t))
   "This variable is used at `mykie' function.
 You don't need to contain prefix-arg checking function. Mykie will check
@@ -91,6 +95,7 @@ whether current-prefix-arg is non-nil or not before check this variable.")
   "This variable is used at `mykie' function.")
 
 (defvar mykie:group-conditions '(mykie:region-conditions
+                                 mykie:prefix-arg-conditions*
                                  mykie:prefix-arg-conditions
                                  mykie:normal-conditions)
   "Mykie will check each condition by this list's order.
@@ -168,7 +173,10 @@ To change this variable use `add-to-list'.")
 (defvar mykie:precheck-function
   (lambda (condition-name)
     (pcase condition-name
-      (`mykie:region-conditions     (region-active-p))
+      (`mykie:region-conditions (region-active-p))
+      (`mykie:prefix-arg-conditions*
+       (and current-prefix-arg
+            (not (equal '(4) current-prefix-arg))))
       (`mykie:prefix-arg-conditions current-prefix-arg)
       (condition-name t)))
   "Pre-check condition depending on CONDITION-NAME before check the
