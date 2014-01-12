@@ -206,7 +206,10 @@ Otherwise nil.")
 (add-hook 'prog-mode-hook
           '(lambda () (setq-local mykie:prog-mode-flag t)))
 
-(defun mykie:loop (&rest keybinds)
+(defmacro mykie:loop (&rest args)
+  `(mykie:loop-core (quote ,args)))
+
+(defun mykie:loop-core (keybinds)
   (lexical-let*
       (keynum
        (exist-p
@@ -225,10 +228,10 @@ Otherwise nil.")
           if func
           do (mykie:execute func))))
 
-(defun mykie:do-while (&rest args)
+(defmacro mykie:do-while (&rest args)
   "Firstly do 1th function of ARGS and then do `mykie:loop' with ARGS."
-  (mykie:execute (nth 1 args))
-  (apply 'mykie:loop args))
+  `(progn (mykie:execute (nth 1 (quote ,args)))
+          (mykie:loop-core (quote ,args))))
 
 (defun mykie:execute (func)
   "Execute FUNC.
