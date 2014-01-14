@@ -764,6 +764,33 @@ See also `mykie:define-key*'"
        (mykie:set-keys-core order 'global-map (quote ,args) t))))
 (put 'mykie:set-keys* 'lisp-indent-function 1)
 
+(defmacro mykie:combined-command (&rest args)
+  "This macro return lambda form with `mykie'.
+So you can register keybind like this:
+
+ (global-set-key (kbd \"C-j\")
+  (mykie:combined-command
+    :default newline-and-indent
+    :C-u (fill-region (point-at-bol) (point-at-eol))))"
+  `(lambda ()
+     (interactive)
+     (mykie:core (quote ,args))))
+
+(defmacro mykie:combined-command* (&rest args)
+  "This macro return lambda form with `mykie' and parenthesized syntax.
+So you can register keybind like this:
+
+ (global-set-key (kbd \"C-j\")
+  (mykie:combined-command
+    (:default newline-and-indent)
+    (:C-u (fill-region (point-at-bol) (point-at-eol)))))"
+  `(mykie:make-combined-command (quote ,args)))
+
+(defadvice mykie:combined-command*
+  (around ad-parse-parenthesized activate)
+  (ad-set-args 0 (mykie:parse-parenthesized-syntax (ad-get-args 0)))
+  ad-do-it)
+
 (when mykie:use-major-mode-key-override
   (mykie:initialize))
 
