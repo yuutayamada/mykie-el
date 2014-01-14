@@ -489,6 +489,16 @@ You can set below keyword by default:
    If you set t then deactivate region in both cases."
   `(mykie:core (quote ,args)))
 
+(defmacro mykie* (&rest args)
+  "Like `mykie', but you can use parenthesized syntax to ARGS."
+  `(mykie:core (quote ,args)))
+
+(defadvice mykie*
+  (around ad-parse-parenthesized activate)
+  "Parse parenthesized syntax."
+  (ad-set-args 0 (mykie:parse-parenthesized-syntax (ad-get-args 0)))
+  ad-do-it)
+
 (defun mykie:core (args)
   (setq args (if (symbolp args) (symbol-value args) args))
   (loop initially (when (eq 'exit (mykie:init args)) (return))
