@@ -491,13 +491,8 @@ You can set below keyword by default:
 
 (defmacro mykie* (&rest args)
   "Like `mykie', but you can use parenthesized syntax to ARGS."
-  `(mykie:core (quote ,args)))
-
-(defadvice mykie*
-  (around ad-parse-parenthesized activate)
-  "Parse parenthesized syntax."
-  (ad-set-args 0 (mykie:parse-parenthesized-syntax (ad-get-args 0)))
-  ad-do-it)
+  `(mykie:core
+    (mykie:parse-parenthesized-syntax (quote ,args))))
 
 (defun mykie:core (args)
   (setq args (if (symbolp args) (symbol-value args) args))
