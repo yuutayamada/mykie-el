@@ -779,7 +779,7 @@ So you can register keybind like this:
   (mykie:combined-command
     (:default newline-and-indent)
     (:C-u (fill-region (point-at-bol) (point-at-eol)))))"
-  `(mykie:make-combined-command (quote ,args)))
+  `(mykie:combined-command ,@args))
 
 (defadvice mykie:combined-command*
   (around ad-parse-parenthesized activate)
