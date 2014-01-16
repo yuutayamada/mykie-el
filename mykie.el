@@ -776,7 +776,7 @@ So you can register keybind like this:
 So you can register keybind like this:
 
  (global-set-key (kbd \"C-j\")
-  (mykie:combined-command
+  (mykie:combined-command*
     (:default newline-and-indent)
     (:C-u (fill-region (point-at-bol) (point-at-eol)))))"
   `(mykie:combined-command ,@args))
