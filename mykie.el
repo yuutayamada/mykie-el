@@ -715,13 +715,15 @@ Examples:
     (funcall set-keys)))
 
 (defun mykie:parse-parenthesized-syntax (args)
-  (loop with new-args
-        for (keyword . function) in args
-        collect keyword into new-args
-        if (listp function)
-        collect `(progn ,@function) into new-args
-        else collect function into new-args
-        finally return new-args))
+  (typecase (car args)
+    (list (loop with new-args
+                for (keyword . function) in args
+                collect keyword into new-args
+                if (listp function)
+                collect `(progn ,@function) into new-args
+                else collect function into new-args
+                finally return new-args))
+    (symbol args)))
 
 (defmacro mykie:define-key* (keymap key &rest args)
   "Like `mykie:define-key' but you can use parenthesized syntax.
