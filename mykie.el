@@ -489,11 +489,6 @@ You can set below keyword by default:
    If you set t then deactivate region in both cases."
   `(mykie:core (quote ,args)))
 
-(defmacro mykie* (&rest args)
-  "Like `mykie', but you can use parenthesized syntax to ARGS."
-  `(mykie:core
-    (mykie:parse-parenthesized-syntax (quote ,args))))
-
 (defun mykie:core (args)
   (setq args (if (symbolp args) (symbol-value args) args))
   (loop initially (when (eq 'exit (mykie:init args)) (return))
@@ -569,13 +564,13 @@ Example:
    :region (message \"%s\" mykie:region-str)
    :C-u (message \"C-u y\"))"
   `(mykie:define-key-core
-    (symbol-name (quote ,keymap))
-    ,keymap ,key ,args))
+    (symbol-name (quote ,keymap)) ,keymap ,key (quote ,args)))
 (put 'mykie:define-key 'lisp-indent-function 2)
 
 (defun mykie:define-key-core (keymap-name keymap key args)
   (lexical-let* ((key (mykie:format-key key))
-                 (args (append args `(:key-info (,key . ,keymap-name))))
+                 (args (append (mykie:parse-parenthesized-syntax args)
+                               `(:key-info (,key . ,keymap-name))))
                  ;; Workaround: Assign command name
                  (sym (funcall mykie:make-funcname-function
                                args keymap key keymap-name)))
@@ -634,6 +629,7 @@ Example:
   `(mykie:define-key-with-self-key-core ,key (quote ,args)))
 
 (defun mykie:define-key-with-self-key-core (key args)
+  (setq args (mykie:parse-parenthesized-syntax args))
   (add-to-list 'mykie:self-insert-keys `(,key ,args))
   (mykie:define-key-core "global-map" global-map (mykie:format-key key)
                          (append args
@@ -680,16 +676,14 @@ Examples:
        (mykie:set-keys-core order 'global-map (quote ,args)))))
 (put 'mykie:set-keys 'lisp-indent-function 1)
 
-(defun mykie:set-keys-core (order keymap-sym args &optional parenthesize)
+(defun mykie:set-keys-core (order keymap-sym args)
   (lexical-let*
       ((set-key
         (lambda (key-and-prop &optional keymap-name keymap)
           (lexical-let
               ((key (car key-and-prop))
                (property
-                (if parenthesize
-                    (mykie:parse-parenthesized-syntax (cdr key-and-prop))
-                  (cdr key-and-prop))))
+                (mykie:parse-parenthesized-syntax (cdr key-and-prop))))
             (case order
               (with-self-key
                (mykie:define-key-with-self-key-core key property))
@@ -725,42 +719,6 @@ Examples:
                 finally return new-args))
     (symbol args)))
 
-(defmacro mykie:define-key* (keymap key &rest args)
-  "Like `mykie:define-key' but you can use parenthesized syntax.
-For example:
- (mykie:define-key* global-map \"C-j\"
-   (:default (message \"default\")
-             (message \"second line\"))
-   (:C-u     (message \"C-u function\")))"
-  `(mykie:define-key-core
-    (symbol-name (quote ,keymap)) ,keymap ,key
-    (mykie:parse-parenthesized-syntax (quote ,args))))
-(put 'mykie:define-key* 'lisp-indent-function 1)
-
-(defmacro mykie:global-set-key* (key &rest args)
-  "Like `mykie:global-set-key' but you can use parenthesized syntax.
-See also `mykie:define-key*'"
-  `(mykie:define-key-core
-    "global-map" global-map ,key
-    (mykie:parse-parenthesized-syntax (quote ,args))))
-(put 'mykie:global-set-key* 'lisp-indent-function 1)
-
-(defmacro mykie:define-key-with-self-key* (key &rest args)
-  "Like `mykie:define-key-with-self-key' but you can use parenthesized syntax.
-See also `mykie:define-key*'"
-  `(mykie:define-key-with-self-key-core
-    ,key (mykie:parse-parenthesized-syntax (quote ,args))))
-(put 'mykie:define-key-with-self-key* 'lisp-indent-function 1)
-
-(defmacro mykie:set-keys* (keymap-or-order &rest args)
-  "Like `mykie:set-keys' but you can use parenthesized syntax.
-See also `mykie:define-key*'"
-  `(let ((order   ,keymap-or-order))
-     (if (keymapp ,keymap-or-order)
-         (mykie:set-keys-core order (quote ,keymap-or-order) (quote ,args) t)
-       (mykie:set-keys-core order 'global-map (quote ,args) t))))
-(put 'mykie:set-keys* 'lisp-indent-function 1)
-
 (defmacro mykie:combined-command (&rest args)
   "This macro return lambda form with `mykie'.
 So you can register keybind like this:
@@ -773,18 +731,13 @@ So you can register keybind like this:
      (interactive)
      (mykie:core (quote ,args))))
 
-(defmacro mykie:combined-command* (&rest args)
-  "This macro return lambda form with `mykie' and parenthesized syntax.
-So you can register keybind like this:
-
- (global-set-key (kbd \"C-j\")
-  (mykie:combined-command*
-    (:default newline-and-indent)
-    (:C-u (fill-region (point-at-bol) (point-at-eol)))))"
-  `(mykie:combined-command ,@args))
-
-(defadvice mykie:combined-command*
+(defadvice mykie:combined-command
   (around ad-parse-parenthesized activate)
+  (ad-set-args 0 (mykie:parse-parenthesized-syntax (ad-get-args 0)))
+  ad-do-it)
+
+(defadvice mykie
+  (around mykie:parse-parenthesized-syntax activate)
   (ad-set-args 0 (mykie:parse-parenthesized-syntax (ad-get-args 0)))
   ad-do-it)
 
