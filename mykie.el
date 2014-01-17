@@ -426,13 +426,13 @@ args with non-nil after do mykie's command."
 
 (defmacro mykie (&rest args)
   "Call function you are set functions.
-You can set below keyword by default:
+You can set below keyword to ARGS by default:
 
 *Functions*
- :default or t      | call this if conditions aren't matched all conditions
+ :default or t      | Call this if conditions aren't matched all conditions
  :C-u               | Call this if you pushed C-u key before pushing the key
- :C-u*N             | Call this if you pushed N times of C-u(replace N to number)
- :M-N               | Call this if you pushed such as M-1(replace N to number)
+ :C-u*N             | Call this if you pushed N times of C-u
+ :M-N               | Call this if you pushed such as M-1
  :region            | Call this if you are selecting region
  :region&C-u        | Call this if you satisfied :region & :C-u condition
  :repeat            | Call this if you repeat same command at same point
@@ -448,7 +448,7 @@ You can set below keyword by default:
  :C-u&email         | Call this if you satisfied :C-u & :email
  :url               | Call this if current point matched (thing-at-point 'url)
  :C-u&url           | Call this if you satisfied :C-u & :url
- :MAJOR-MODE        | Call this if :MAJOR-MODE matched major-mode.
+ :MAJOR-MODE        | Call this if :MAJOR-MODE matched `major-mode'.
  :C-u&MAJOR-MODE    | Call this if you satisfied :C-u & :MAJOR-MODE
  :region&MAJOR-MODE | Call this if you satisfied :region & :MAJOR-MODE
  :prog              | Call this if current buffer is related `prog-mode'
@@ -733,11 +733,13 @@ So you can register keybind like this:
 
 (defadvice mykie:combined-command
   (around ad-parse-parenthesized activate)
+  "Parse args to convert parenthesized-syntax if it was needed."
   (ad-set-args 0 (mykie:parse-parenthesized-syntax (ad-get-args 0)))
   ad-do-it)
 
 (defadvice mykie
   (around mykie:parse-parenthesized-syntax activate)
+  "Parse args to convert parenthesized-syntax if it was needed."
   (ad-set-args 0 (mykie:parse-parenthesized-syntax (ad-get-args 0)))
   ad-do-it)
 
