@@ -45,6 +45,7 @@
 ;; You can see more example : https://github.com/yuutayamada/mykie-el
 ;;; Code:
 (eval-when-compile (require 'cl))
+(require 'ffap)
 
 ;; CUSTOMIZE VARIABLE
 (defvar mykie:region-conditions
@@ -69,6 +70,7 @@ and make sure user pushed multiple time C-u more than one time.")
     (:C-u&prog    . mykie:prog-mode-flag)
     (:C-u&email   . (mykie:thing-exist-p 'email))
     (:C-u&url     . (mykie:thing-exist-p 'url))
+    (:C-u&file    . (mykie:file-at-point-p))
     (:C-u&bobp    . (bobp))
     (:C-u&eobp    . (eobp))
     (:C-u&bolp    . (bolp))
@@ -86,6 +88,7 @@ whether current-prefix-arg is non-nil or not before check this variable.")
     (:comment     . (mykie:get-comment/string-state))
     (:email       . (mykie:thing-exist-p 'email))
     (:url         . (mykie:thing-exist-p 'url))
+    (:file        . (mykie:file-at-point-p))
     (:minibuff    . (minibufferp))
     (:bobp        . (bobp))
     (:eobp        . (eobp))
@@ -191,6 +194,7 @@ is exists.")
 (defvar mykie:current-args '())
 (defvar mykie:current-point "")
 (defvar mykie:current-thing nil)
+(defvar mykie:current-file nil)
 (defvar mykie:region-str "")
 (defvar mykie:C-u-num nil)
 
@@ -327,6 +331,12 @@ If return value is non-nil, then save the value to `mykie:current-thing'."
   (when (nth 8 (save-excursion (syntax-ppss
                                 (if (bobp) (point) (1- (point))))))
     :comment))
+
+(defun mykie:file-at-point-p ()
+  "Return non-nil if current point is file related path.
+And then save the path to `mykie:current-file' variable."
+  (mykie:aif (ffap-file-at-point)
+      (setq mykie:current-file it)))
 
 (defun mykie:error-occur-p  ()
   "Return non-nil if `flycheck-current-errors' or `flymake-err-info' is non-nil."
