@@ -148,9 +148,9 @@ contains current minor-mode")
 To change this variable use `add-to-list'.")
 
 (defvar mykie:default-condition-keyword-alist
-  '((mykie:region-conditions     :region)
-    (mykie:prefix-arg-conditions :C-u))
-  "Alist pair `mykie:group-conditions' element and the default keyword.")
+  '((mykie:region-conditions     (:region))
+    (mykie:prefix-arg-conditions (:C-u :C-u!)))
+  "Alist pair `mykie:group-conditions' element and default keyword(s) list.")
 
 (defvar mykie:get-default-function
   (lambda (args)
@@ -511,7 +511,7 @@ You can set below keyword to ARGS by default:
         if (and (funcall mykie:precheck-function conditions-sym)
                 (if mykie:use-fuzzy-order
                     (mykie:by-fuzzy-order args conditions default-kw)
-                  (mykie:by-condition-order conditions default-kw)))
+                  (mykie:by-condition-order args conditions default-kw)))
         do (progn (setq mykie:current-state it)
                   (mykie:execute (plist-get args it))
                   (return))
@@ -519,10 +519,10 @@ You can set below keyword to ARGS by default:
   (unless (mykie:repeat-p)
     (setq mykie:current-point (point))))
 
-(defun mykie:by-fuzzy-order (args conditions default-kw)
+(defun mykie:by-fuzzy-order (args conditions default-keywords)
   "Check CONDITIONS by keyword base that extracted from ARGS."
   (loop with cond-len = (1- (length conditions))
-        with default-keyword-exist
+        with default-keyword
         for i from 0 to (1- (length args)) by 2
         for keyword = (nth i args)
         if (member keyword mykie:default-keywords)
@@ -536,9 +536,11 @@ You can set below keyword to ARGS by default:
                       do (return (nth j conditions)))
         do (when (eq keyword (mykie:check it))
              (return keyword))
-        else if (eq default-kw keyword)
-        do (setq default-keyword-exist t)
-        finally return (when default-keyword-exist default-kw)))
+        else if (member keyword default-keywords)
+        do (setq default-keyword keyword)
+        finally return (when default-keyword
+                         (mykie:reset-prefix-arg default-keyword)
+                         default-keyword)))
 
 (defun mykie:check (kw-and-condition)
   "Return keyword if checking condition is succeed.
@@ -551,7 +553,7 @@ Otherwise return KW-AND-CONDITION's first element."
           result
         keyword))))
 
-(defun mykie:by-condition-order (conditions default-kw)
+(defun mykie:by-condition-order (args conditions default-keywords)
   "Check CONDITIONS by the CONDITIONS order."
   (loop for condition in conditions
         if (member (car condition) mykie:default-keywords)
@@ -559,13 +561,21 @@ Otherwise return KW-AND-CONDITION's first element."
         else if (mykie:check condition)
         do (when (plist-get mykie:current-args it)
              (return it))
-        finally return (when (plist-get mykie:current-args default-kw)
-                         default-kw)))
+        finally return (loop with last = (1- (length mykie:current-args))
+                             for i from 0 to last by 2
+                             if (member (nth i args) default-keywords) do
+                             (mykie:reset-prefix-arg (car it))
+                             (return (car it)))))
 
 (defun mykie:get-default-condition-keyword (conditions-sym)
   "Get condition specific keyword that match CONDITIONS-SYM from
 `mykie:default-condition-keyword-alist'."
   (car (assoc-default conditions-sym mykie:default-condition-keyword-alist)))
+
+(defun mykie:reset-prefix-arg (default-kw)
+  "Reset `current-prefix-arg' if DEFAULT-KW is :C-u!."
+  (when (eq :C-u! default-kw)
+    (setq current-prefix-arg nil)))
 
 (defun mykie:run-hook (direction)
   (when (funcall mykie:region-func-predicate)
