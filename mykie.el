@@ -603,19 +603,21 @@ Example:
 (put 'mykie:define-key 'lisp-indent-function 2)
 
 (defun mykie:define-key-core (keymap-name keymap key args)
-  (lexical-let* ((key (mykie:format-key key))
-                 (args (append (mykie:parse-parenthesized-syntax args)
-                               `(:key-info (,key . ,keymap-name))))
-                 ;; Workaround: Assign command name
-                 (sym (funcall mykie:make-funcname-function
-                               args keymap key keymap-name)))
-    (when (and (equal "global-map" keymap-name)
-               (< 1 (length (key-description key))))
-      (add-to-list 'mykie:global-keys `(,key ,args)))
-    (fset sym (lambda () (interactive) (funcall 'mykie:core args)))
-    (define-key keymap key sym)
-    (mykie:aif (plist-get args :clone)
-        (mykie:clone-key it args '(:default self-insert-command)))))
+  (lexical-let* ((key (mykie:format-key key)))
+    (if (eq nil (car args))
+        (define-key keymap key nil)
+      (lexical-let* ((args (append (mykie:parse-parenthesized-syntax args)
+                                   `(:key-info (,key . ,keymap-name))))
+                     ;; Workaround: Assign command name
+                     (sym (funcall mykie:make-funcname-function
+                                   args keymap key keymap-name)))
+        (when (and (equal "global-map" keymap-name)
+                   (< 1 (length (key-description key))))
+          (add-to-list 'mykie:global-keys `(,key ,args)))
+        (fset sym (lambda () (interactive) (funcall 'mykie:core args)))
+        (define-key keymap key sym)
+        (mykie:aif (plist-get args :clone)
+            (mykie:clone-key it args '(:default self-insert-command)))))))
 
 (defun mykie:clone-key (key args default-keyword-and-func &optional keymap-info)
   (lexical-let
