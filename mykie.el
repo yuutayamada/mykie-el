@@ -169,11 +169,22 @@ To change this variable use `add-to-list'.")
              (if (eq (funcall mykie:get-default-function args) 'self-insert-command)
                  "self-insert-command" "key")))))
 
-(defvar mykie:get-fallback-function
+(defvar mykie:use-original-key-predicate
+  (lambda ()
+    (cond ((bound-and-true-p multiple-cursors-mode) t)
+          (t nil)))
+  "Predicate whether you use original keybind before load mykie.el.")
+
+(defconst mykie:get-fallback-function
   (lambda (args)
-    (and (mykie:ignore-mode-p)
-         ;; Return default function
-         (funcall mykie:get-default-function args)))
+    (cond ((mykie:ignore-mode-p)
+           ;; Return default function
+           (funcall mykie:get-default-function args))
+          ((funcall mykie:use-original-key-predicate)
+           (lexical-let ((func (lookup-key
+                                (bound-and-true-p mykie:original-map)
+                                (car (plist-get args :key-info)))))
+             `(call-interactively ,func)))))
   "Fallback function that returning fallback function's symbol.")
 
 (defvar mykie:precheck-function
@@ -200,6 +211,8 @@ is exists.")
 (defvar mykie:current-file nil)
 (defvar mykie:region-str "")
 (defvar mykie:C-u-num nil)
+(defconst mykie:original-map (copy-keymap global-map)
+  "Keymap before load mykie.el.")
 
 (defvar mykie:global-keys '()
   "This variable will store global-map's key and mykie's args pair
@@ -409,7 +422,9 @@ then check whether minor-mode list match current `minor-mode-list'."
   (lexical-let
       ((fallback (funcall mykie:get-fallback-function args)))
     (when fallback
-      (mykie:execute fallback)
+      (pcase fallback
+        (`(call-interactively ,func) (call-interactively func))
+        (fallback (mykie:execute fallback)))
       'exit)))
 
 (defun mykie:region-init ()
