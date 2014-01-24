@@ -46,6 +46,8 @@
 ;;; Code:
 (eval-when-compile (require 'cl))
 (require 'ffap)
+(when (require 'helm nil t)
+  (autoload 'helm-show-mykie-keywords "helm-mykie-keywords" nil t))
 
 ;; CUSTOMIZE VARIABLE
 (defvar mykie:region-conditions
