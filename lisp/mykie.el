@@ -142,7 +142,7 @@ contains current minor-mode")
 
 (defvar mykie:region-func-predicate
   '(lambda ()
-     (and (region-active-p)
+     (and (use-region-p)
           (case mykie:current-state ((:region :region&C-u) t)))))
 
 (defvar mykie:default-keywords '(:default t)
@@ -192,7 +192,7 @@ To change this variable use `add-to-list'.")
 (defvar mykie:precheck-function
   (lambda (condition-name)
     (pcase condition-name
-      (`mykie:region-conditions (region-active-p))
+      (`mykie:region-conditions (use-region-p))
       (`mykie:prefix-arg-conditions*
        (and current-prefix-arg
             (not (equal '(4) current-prefix-arg))))
