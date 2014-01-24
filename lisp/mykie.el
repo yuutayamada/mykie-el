@@ -724,15 +724,20 @@ Examples:
    :region query-replace-regexp
    \"b\"
    :C-u (message \"called b\"))"
-  `(let ((order   ,keymap-or-order))
-     (if (keymapp ,keymap-or-order)
-         (mykie:set-keys-core order (quote ,keymap-or-order) (quote ,args))
-       (mykie:set-keys-core order 'global-map (quote ,args)))))
+  `(mykie:set-keys-core (quote ,keymap-or-order) (quote ,args)))
 (put 'mykie:set-keys 'lisp-indent-function 1)
 
-(defun mykie:set-keys-core (order keymap-sym args)
+(defun mykie:set-keys-core (keymap-or-order args)
   (lexical-let*
-      ((set-key
+      ((pair (typecase keymap-or-order
+               (null   '(nil . global-map))
+               (symbol (condition-case err
+                           (when (keymapp (symbol-value keymap-or-order))
+                             (cons nil keymap-or-order))
+                         (error (cons keymap-or-order 'global-map))))))
+       (order      (car pair))
+       (keymap-sym (cdr pair))
+       (set-key
         (lambda (key-and-prop &optional keymap-name keymap)
           (lexical-let
               ((key (car key-and-prop))
