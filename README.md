@@ -453,7 +453,7 @@ Here is an example to attach conditions.
 
 ## Known issues
 Mykie.el can't use with multiple-cursors.el.
-To avoid this this problem, mykie use global-map's key before load
+To avoid this problem, mykie use global-map's key before load
 mykie.el.
 Pull request is welcome:)
 
