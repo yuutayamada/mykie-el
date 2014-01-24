@@ -45,7 +45,7 @@
 ;; You can see more example : https://github.com/yuutayamada/mykie-el
 ;;; Code:
 (eval-when-compile (require 'cl))
-(require 'ffap)
+(autoload 'ffap-file-at-point "ffap")
 (when (require 'helm nil t)
   (autoload 'helm-show-mykie-keywords "helm-mykie-keywords" nil t))
 
