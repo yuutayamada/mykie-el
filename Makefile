@@ -15,4 +15,4 @@ install:
 clean:
 	rm -f mykie.elc
 
-.PHONY:	all test unit ecukes install
+.PHONY:	all test unit install
