@@ -1,3 +1,50 @@
+(ert-deftest mykie-keywords ()
+  (mykie:define-key global-map "C-0"
+    :default     (setq test-result 'default)
+    :C-u         (setq test-result 'C-u)
+    :region      (setq test-result 'region)
+    :err         (setq test-result 'err)
+    :comment     (setq test-result 'comment)
+    :prog        (setq test-result 'prog)
+    :email       (setq test-result 'email)
+    :url         (setq test-result 'url)
+    :file        (setq test-result 'file)
+    :readonly    (setq test-result 'readonly)
+    :bobp        (setq test-result 'bobp)
+    :eobp        (setq test-result 'eobp)
+    :bolp        (setq test-result 'bolp)
+    :eolp        (setq test-result 'eolp)
+    :C-u&email   (setq test-result 'C-u&email)
+    :C-u&url     (setq test-result 'C-u&url)
+    :C-u&file    (setq test-result 'C-u&file)
+    :C-u&err     (setq test-result 'C-u&err)
+    :C-u&prog    (setq test-result 'C-u&prog)
+    :C-u&bobp    (setq test-result 'C-u&bobp)
+    :C-u&eobp    (setq test-result 'C-u&eobp)
+    :C-u&bolp    (setq test-result 'C-u&bolp)
+    :C-u&eolp    (setq test-result 'C-u&eolp)
+    :C-u*2       (setq test-result 'C-u*2)
+    :M-4         (setq test-result 'M-4)
+    :region&C-u  (setq test-result 'region&C-u)
+    :region&prog (setq test-result 'region&prog)
+    :region&err  (setq test-result 'region&err))
+  (cmds-do '(default
+              readonly
+              C-u*2
+              M-4
+              C-u region&C-u
+              region
+              prog C-u&prog region&prog
+              comment
+              err C-u&err region&err
+              email
+              C-u&email
+              url C-u&url
+              file C-u&file
+              bobp eobp bolp eolp
+              C-u&bobp C-u&eobp C-u&bolp C-u&eolp)
+           global-map "C-0"))
+
 ;; mykie:define-key
 (ert-deftest mykie-define-key ()
   (mykie:define-key global-map "C-0"
