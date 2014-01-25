@@ -9,9 +9,9 @@ env:
   global:
     - CURL=curl -fsSkL --retry 9 --retry-delay 9
   matrix:
-    - EVM_EMACS=emacs-23.4-bin
-    - EVM_EMACS=emacs-24.1-bin
-    - EVM_EMACS=emacs-24.2-bin
+    # - EVM_EMACS=emacs-23.4-bin
+    # - EVM_EMACS=emacs-24.1-bin
+    # - EVM_EMACS=emacs-24.2-bin
     - EVM_EMACS=emacs-24.3-bin
 install:
   - if ! test $EVM_EMACS = emacs-24.3-bin; then
