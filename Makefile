@@ -3,8 +3,14 @@ EMACS ?= emacs
 
 all: test
 
-test:
+test: clean-elc
+	${MAKE} clean-elc
 	${MAKE} unit
+	${MAKE} compile
+	${MAKE} unit
+
+compile:
+	${CASK} exec ${EMACS} -Q -batch -f batch-byte-compile lisp/mykie.el
 
 unit:
 	${CASK} exec ert-runner
@@ -12,7 +18,7 @@ unit:
 install:
 	${CASK} install
 
-clean:
-	rm -f mykie.elc
+clean-elc:
+	rm -f lisp/*.elc
 
 .PHONY:	all test unit install
