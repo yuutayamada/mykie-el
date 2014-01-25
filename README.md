@@ -1,4 +1,4 @@
-# Mykie.el | Command multiplexer
+# Mykie.el | Command multiplexer [![Build Status](https://travis-ci.org/yuutayamada/mykie-el.png?branch=feature)](https://travis-ci.org/yuutayamada/mykie-el)
 
 Do you have enough keybinds in Emacs?
 No? Then this program strong help you to add other functions to
@@ -456,6 +456,10 @@ Mykie.el can't use with multiple-cursors.el.
 To avoid this problem, mykie use global-map's key before load
 mykie.el.
 Pull request is welcome:)
+
+## Contributor(s)
+Here's a [list](https://github.com/yuutayamada/mykie-el/contributors)
+of all the people who have contributed to the development of mykie.
 
 ## License
 `mykie.el` is released under GPL v3.
