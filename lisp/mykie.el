@@ -54,7 +54,7 @@
   '((:region&C-u  . current-prefix-arg)
     (:region&prog . mykie:prog-mode-flag)
     (:region&err  . (mykie:error-occur-p))
-    ("^:.+-mode$" . (mykie:get-major-mode-state "region&")))
+    ("^:region&.+-mode$" . (mykie:get-major-mode-state "region&")))
   "This variable is used at `mykie' function.
 You don't need to contain region checking function. Mykie will check
 whether region is active or not before check this variable.")
@@ -67,7 +67,7 @@ and make sure user pushed multiple time C-u more than one time.")
 
 (defvar mykie:prefix-arg-conditions
   '((:C-u&err     . (mykie:error-occur-p))
-    ("^:.+-mode$" . (mykie:get-major-mode-state "C-u&"))
+    ("^:C-u&.+-mode$" . (mykie:get-major-mode-state "C-u&"))
     (:C-u&prog    . mykie:prog-mode-flag)
     (:C-u&email   . (mykie:thing-exist-p 'email))
     (:C-u&url     . (mykie:thing-exist-p 'url))
