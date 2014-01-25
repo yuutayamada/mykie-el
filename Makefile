@@ -4,10 +4,10 @@ EMACS ?= emacs
 all: test
 
 test: clean-elc
-	${MAKE} clean-elc
 	${MAKE} unit
 	${MAKE} compile
 	${MAKE} unit
+	${MAKE} clean-elc
 
 compile:
 	${CASK} exec ${EMACS} -Q -batch -f batch-byte-compile lisp/mykie.el
