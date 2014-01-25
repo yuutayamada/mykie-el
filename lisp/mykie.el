@@ -230,11 +230,13 @@ See also `mykie:attach-mykie-func-to' or `mykie:use-major-mode-key-override'")
 (defvar mykie:attached-mode-list '()
   "list that `mykie:attach-mykie-func-to' function attached mode name list.")
 
-(defvar-local mykie:prog-mode-flag nil
+(defvar mykie:prog-mode-flag nil
   "Buffer local variable, t means this buffer is related programing mode.
 Otherwise nil.")
+
 (add-hook 'prog-mode-hook
-          '(lambda () (setq-local mykie:prog-mode-flag t)))
+          (lambda ()
+            (set (make-local-variable 'mykie:prog-mode-flag) t)))
 
 (defmacro mykie:loop (&rest args)
   `(mykie:loop-core (quote ,args)))
