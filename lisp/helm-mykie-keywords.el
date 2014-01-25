@@ -33,12 +33,23 @@
   (setq helm-mykie-keywords-source
         (loop with base = `((candidates-in-buffer)
                             (action . ,helm-mykie-keywords-action))
-              with make = (lambda (cond)
-                            (loop for (kw . c) in (symbol-value cond)
-                                  collect (format "%s"
+              with get-default = (lambda (cond-sym)
+                                   (if (equal 'mykie:normal-conditions cond-sym)
+                                       mykie:default-keywords
+                                     (car
+                                      (assoc-default
+                                       cond-sym
+                                       mykie:default-condition-keyword-alist))))
+              with make = (lambda (cond-sym)
+                            (loop with format = (lambda (kw)
                                                   (typecase kw
                                                     (symbol (symbol-name kw))
-                                                    (string kw)))))
+                                                    (string kw)))
+                                  with default-kw = (funcall get-default cond-sym)
+                                  with keywords
+                                  for (kw . c) in (symbol-value cond-sym)
+                                  collect (funcall format kw) into keywords
+                                  finally return (append keywords default-kw)))
               for cond in mykie:group-conditions
               for keywords = (funcall make cond)
               for name = (list (cons 'name (symbol-name cond)))
