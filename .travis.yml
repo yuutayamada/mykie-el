@@ -12,7 +12,7 @@ env:
   - EVM_EMACS=emacs-24.3-bin
 install:
   - if ! test $EVM_EMACS = emacs-24.3-bin; then
-      $CURL https://raw.github.com/emacsmirror/cl-lib/master/cl-lib.el -o lisp/cl-lib.el;
+      $CURL https://raw.github.com/emacsmirror/cl-lib/master/cl-lib.el -o cl-lib.el;
     fi
 script:
   - emacs --version
