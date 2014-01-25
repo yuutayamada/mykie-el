@@ -1,4 +1,7 @@
-# Mykie.el | Command multiplexer [![Build Status](https://travis-ci.org/yuutayamada/mykie-el.png?branch=feature)](https://travis-ci.org/yuutayamada/mykie-el)
+[![Build Status](https://travis-ci.org/yuutayamada/mykie-el.png?branch=master)](https://travis-ci.org/yuutayamada/mykie-el)
+[![Gittip](http://img.shields.io/gittip/yuutayamada.png)](https://www.gittip.com/yuutayamada)
+
+# Mykie.el | Command multiplexer
 
 Do you have enough keybinds in Emacs?
 No? Then this program strong help you to add other functions to
@@ -134,6 +137,11 @@ See below description.
 | :deactivate-region  | symbol         | deactivate selecting region after mykie executed command. You can specify this t, 'region, 'region&C-u. |
 | :region-handle-flag | symbol         | Do copying or killing before command executing. This function is convenience if you want to use kill-ring's variable. But there is mykie:region-str variable that always store region's strings. |
 
+## I can't remember keyword
+Me too.
+If you can use [Helm](https://github.com/emacs-helm/helm), then
+you can use `helm-mykie-keywords` command that show available keywords.
+
 ## Fuzzy Ordering
 This function name was lazy ordering until v0.1.1.
 From v0.2.0, the name was renamed to fuzzy ordering and this function is
@@ -182,7 +190,7 @@ You can specify below forms.
 
 There are four patterns to specify `mykie` keybinds.
 
-- `mykie:global-set-key`  
+- `mykie:global-set-key`
 ```lisp
 (mykie:global-set-key "C-0"
   :default (message "hi"))
