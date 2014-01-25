@@ -9,5 +9,4 @@
   (depends-on "ert")
   (depends-on "ert-runner")
   (depends-on "s" "1.3.0")
-  (depends-on "dash" "1.0.3")
-  (depends-on "cl-lib"))
+  (depends-on "dash" "1.0.3"))
