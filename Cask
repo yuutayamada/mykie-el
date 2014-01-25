@@ -1,6 +1,6 @@
 (source melpa)
 
-(package-file "mykie.el")
+(package-file "lisp/mykie.el")
 
 (development
   ;; Unit test libraries
