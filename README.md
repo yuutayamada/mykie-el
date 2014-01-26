@@ -69,7 +69,7 @@ You can specify like this too.
 You can use parenthesized style too. Like this:
 
 ```lisp
-(mykie:global-set-key* "C-j"
+(mykie:global-set-key "C-j"
   (:default (delete-trailing-whitespace)
             (case major-mode
               (org-mode (org-return-indent)
@@ -78,10 +78,9 @@ You can use parenthesized style too. Like this:
   (:C-u&eolp (fill-region (point-at-bol) (point-at-eol))))
 ```
 
-You can use mykie:define-key\*, mykie:global-set-key\*,
-mykie:define-key-with-self-key\*, and mykie:set-keys\* to register
+You can use mykie:define-key, mykie:global-set-key,
+mykie:define-key-with-self-key, and mykie:set-keys to register
 keybind with parenthesized style.
-Feature is same as same name function without \*.
 
 ## Available Keywords
 
@@ -137,7 +136,7 @@ See below description.
 | :deactivate-region  | symbol         | deactivate selecting region after mykie executed command. You can specify this t, 'region, 'region&C-u. |
 | :region-handle-flag | symbol         | Do copying or killing before command executing. This function is convenience if you want to use kill-ring's variable. But there is mykie:region-str variable that always store region's strings. |
 
-## I can't remember keyword
+## I can't remember all keywords
 Me too.
 If you can use [Helm](https://github.com/emacs-helm/helm), then
 you can use `helm-mykie-keywords` command that show available keywords.
