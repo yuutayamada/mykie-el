@@ -647,7 +647,13 @@ Example:
         (fset sym (lambda () (interactive) (funcall 'mykie:core args)))
         (define-key keymap key sym)
         (mykie:aif (plist-get args :clone)
-            (mykie:clone-key it args '(:default self-insert-command)))))))
+            (progn
+              (if (and (stringp it) (= 1 (length it)))
+                  (add-to-list 'mykie:self-insert-keys it)
+                (add-to-list 'mykie:global-keys it))
+              (mykie:clone-key
+               it (mykie:replace-property args `(:key-info (,it . "global-map")))
+               '(:default self-insert-command))))))))
 
 (defun mykie:clone-key (key args default-keyword-and-func &optional keymap-info)
   (lexical-let
