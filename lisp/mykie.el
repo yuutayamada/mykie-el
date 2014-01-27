@@ -636,7 +636,8 @@ Example:
     (if (eq nil (car args))
         (define-key keymap key nil)
       (lexical-let* ((args (append (mykie:parse-parenthesized-syntax args)
-                                   `(:key-info (,key . ,keymap-name))))
+                                   (unless (plist-get args :key-info)
+                                     `(:key-info (,key . ,keymap-name)))))
                      ;; Workaround: Assign command name
                      (sym (funcall mykie:make-funcname-function
                                    args keymap key keymap-name)))
