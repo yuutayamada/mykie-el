@@ -299,10 +299,10 @@ The MODE is mode name's symbol such as 'emacs-lisp-mode."
        (ignore (or (member mode mykie:major-mode-ignore-list)
                    (member mode mykie:minor-mode-ignore-list)))
        (attach-func
-        (lambda (keys)
+        (lambda (mykie-global-keys)
           (loop with keymap-name = (concat (symbol-name mode) "-map")
                 with keymap      = (symbol-value (intern keymap-name))
-                for key in keys
+                for key in mykie-global-keys
                 for args = (funcall (lookup-key global-map key) t)
                 for mode-func = (lookup-key keymap key)
                 if (and (string-match "^C-c .+$" (key-description key))
