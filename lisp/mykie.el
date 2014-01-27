@@ -304,10 +304,11 @@ The MODE is mode name's symbol such as 'emacs-lisp-mode."
                 with keymap      = (symbol-value (intern keymap-name))
                 for (key args) in keys
                 for mode-func = (lookup-key keymap key)
-                if (string-match "^C-c .+$" (key-description key))
+                if (and (string-match "^C-c .+$" (key-description key))
+                        (functionp mode-func))
                 do (mykie:define-key-core
                     "global-map" global-map key
-                    (append args `((intern (format ":%S" ,mode)) ,mode-func)))
+                    (append args (list (intern (format ":%S" mode)) mode-func)))
                 if (and (keymapp keymap)
                         (functionp mode-func)
                         (not (string-match "^<?C-c>?$" (key-description key)))
