@@ -296,6 +296,8 @@ The MODE is mode name's symbol such as 'emacs-lisp-mode."
   (interactive)
   (lexical-let*
       ((mode (or mode-symbol major-mode))
+       (ignore (or (member mode mykie:major-mode-ignore-list)
+                   (member mode mykie:minor-mode-ignore-list)))
        (attach-func
         (lambda (keys)
           (loop with keymap-name = (concat (symbol-name mode) "-map")
@@ -307,17 +309,19 @@ The MODE is mode name's symbol such as 'emacs-lisp-mode."
                         (not (string-match "^mykie:" (symbol-name mode-func))))
                 do (mykie:clone-key
                     key args `(:default ,mode-func) `(,keymap-name . ,keymap))))))
-    (condition-case err
-        (if (member mode mykie:attached-mode-list)
-            (error (format "Mykie: already attached %s" (symbol-name mode)))
-          (case mykie:use-major-mode-key-override
-            (both   (funcall attach-func mykie:global-keys)
-                    (funcall attach-func mykie:self-insert-keys))
-            (global (funcall attach-func mykie:global-keys))
-            (self   (funcall attach-func mykie:self-insert-keys))
-            (t      (funcall attach-func mykie:self-insert-keys)))
-          (add-to-list 'mykie:attached-mode-list mode))
-      (error err))))
+    (if ignore
+        (message (format "mykie overriding key: Ignore %S" mode))
+      (condition-case err
+          (if (member mode mykie:attached-mode-list)
+              (error (format "Mykie: already attached %s" (symbol-name mode)))
+            (case mykie:use-major-mode-key-override
+              (both   (funcall attach-func mykie:global-keys)
+                      (funcall attach-func mykie:self-insert-keys))
+              (global (funcall attach-func mykie:global-keys))
+              (self   (funcall attach-func mykie:self-insert-keys))
+              (t      (funcall attach-func mykie:self-insert-keys)))
+            (add-to-list 'mykie:attached-mode-list mode))
+        (error err)))))
 
 (defun mykie:repeat-p ()
   (equal this-command last-command))
