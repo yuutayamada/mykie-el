@@ -302,7 +302,8 @@ The MODE is mode name's symbol such as 'emacs-lisp-mode."
         (lambda (keys)
           (loop with keymap-name = (concat (symbol-name mode) "-map")
                 with keymap      = (symbol-value (intern keymap-name))
-                for (key args) in keys
+                for key in keys
+                for args = (funcall (lookup-key global-map key) t)
                 for mode-func = (lookup-key keymap key)
                 if (and (string-match "^C-c .+$" (key-description key))
                         (functionp mode-func))
@@ -643,8 +644,10 @@ Example:
                                    args keymap key keymap-name)))
         (when (and (equal "global-map" keymap-name)
                    (< 1 (length (key-description key))))
-          (add-to-list 'mykie:global-keys `(,key ,args)))
-        (fset sym (lambda () (interactive) (funcall 'mykie:core args)))
+          (add-to-list 'mykie:global-keys key))
+        (fset sym (lambda (&optional get-args)
+                    (interactive)
+                    (if get-args args (funcall 'mykie:core args))))
         (define-key keymap key sym)
         (mykie:aif (plist-get args :clone)
             (progn
@@ -703,7 +706,7 @@ Example:
 
 (defun mykie:define-key-with-self-key-core (key args)
   (setq args (mykie:parse-parenthesized-syntax args))
-  (add-to-list 'mykie:self-insert-keys `(,key ,args))
+  (add-to-list 'mykie:self-insert-keys key)
   (mykie:define-key-core "global-map" global-map (mykie:format-key key)
                          (append args
                                  '(:default self-insert-command)
