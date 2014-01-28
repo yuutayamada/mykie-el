@@ -204,7 +204,7 @@ There are four patterns to specify `mykie` keybinds.
 -  `mykie:define-key-with-self-key`  
 This function define key to self-insert-key(like [a-zA-Z]) with
 `mykie` functions.
-This function add :default 'self-insert-command automatically to
+This function add :default self-insert-command automatically to
 specified key.
 ```lisp
 (mykie:define-key-with-self-key
@@ -228,17 +228,17 @@ For specific keymap
 ;; Set keybinds to specific keymap:
 (mykie:set-keys emacs-lisp-mode-map
   "C-1"
-  :default '(message "C-1")
-  :C-u     '(message "C-1+C-u")
+  :default (message "C-1")
+  :C-u     (message "C-1+C-u")
   "C-2"
-  :default '(message "C-2")
-  :C-u     '(message "C-2+C-u"))
+  :default (message "C-2")
+  :C-u     (message "C-2+C-u"))
 ```
 For self-insert-command like "a", "b", "c" etc..
 ```lisp
 ;; Set keybinds for self-insert-key
 ;; You don't need to specify :default state, it's specified to
-;; 'self-insert-command automatically to it.
+;; self-insert-command automatically to it.
 (mykie:set-keys with-self-key
   "a"
   :C-u (message "called a")
@@ -258,10 +258,10 @@ Here is an example:
 (setq mykie:use-major-mode-key-override 'both)
 (mykie:initialize)
 (mykie:set-keys nil ; <- nil means registering global-map
-  "C-w" :default 'tetris :C-u '(message "C-u+C-w"))
+  "C-w" :default tetris :C-u (message "C-u+C-w"))
 (mykie:set-keys with-self-key ; <- this means registering
   ;; ↓ You don't need to specify :default and self-insert-command
-  ;; :default 'self-insert-command
+  ;; :default self-insert-command
   "1"  :region sort-lines
   "2"  :region align
   "3"  :region query-replace
@@ -433,8 +433,8 @@ There is a similar command that do first command and then wait user input.
 (mykie:global-set-key
   "C-j"
   :default (mykie:do-while
-              "j" 'newline-and-indent
-              "u" 'undo))
+              "j" newline-and-indent
+              "u" undo))
 ```
 
 Above command do newline-and-indent and then wait user input.
