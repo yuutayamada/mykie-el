@@ -67,7 +67,8 @@ Mykie will check whether current-prefix-arg is non-nil
 and make sure user pushed multiple time C-u more than one time.")
 
 (defvar mykie:prefix-arg-conditions
-  '((:C-u&err         . (mykie:error-occur-p))
+  '((:C-u&repeat      . (mykie:repeat-p))
+    (:C-u&err         . (mykie:error-occur-p))
     ("^:C-u&.+-mode$" . (mykie:get-major-mode-state "C-u&"))
     (:C-u&prog        . mykie:prog-mode-flag)
     (:C-u&email       . (mykie:thing-exist-p 'email))
