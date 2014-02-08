@@ -51,7 +51,8 @@
 
 ;; CUSTOMIZE VARIABLE
 (defvar mykie:region-conditions
-  '((:region&C-u         . current-prefix-arg)
+  '((:region&repeat      . (mykie:repeat-p))
+    (:region&C-u         . current-prefix-arg)
     (:region&prog        . mykie:prog-mode-flag)
     (:region&err         . (mykie:error-occur-p))
     ("^:region&.+-mode$" . (mykie:get-major-mode-state "region&")))
