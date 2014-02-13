@@ -45,6 +45,7 @@
 ;; You can see more example : https://github.com/yuutayamada/mykie-el
 ;;; Code:
 (eval-when-compile (require 'cl))
+(autoload 'ido-active "ido")
 (autoload 'ffap-file-at-point "ffap")
 (when (require 'helm nil t)
   (autoload 'helm-show-mykie-keywords "helm-mykie-keywords" nil t))
@@ -283,7 +284,8 @@ Example
   \"g\" (if current-prefix-arg
             (keyboard-quit)))"
   (mykie:run-hook 'before)
-  (run-hooks 'pre-command-hook)
+  (unless (ido-active)
+    (run-hooks 'pre-command-hook))
   (typecase func
     (command
      ;; Do not use `setq' because the command loop overrides
@@ -292,7 +294,8 @@ Example
      (funcall 'call-interactively func))
     (function (funcall func))
     (list     (funcall 'eval `(progn ,func))))
-  (run-hooks 'post-command-hook)
+  (unless (ido-active)
+    (run-hooks 'post-command-hook))
   (mykie:run-hook 'after))
 
 (defun mykie:attach-mykie-func-to (&optional mode-symbol)
