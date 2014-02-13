@@ -147,6 +147,11 @@ contains current minor-mode")
      (and (use-region-p)
           (case mykie:current-state ((:region :region&C-u) t)))))
 
+(defvar mykie:ignore-keybinds '("C-c")
+  "Set this variable to avoid overriding specific key.
+Normally use this variable to avoid overriding C-c key to use
+`mode-specific-command-prefix'.")
+
 (defvar mykie:default-keywords '(:default t)
   "Some function using :default keyword. So do not delete :default.
 To change this variable use `add-to-list'.")
@@ -307,14 +312,8 @@ The MODE is mode name's symbol such as 'emacs-lisp-mode."
                 for key in mykie-global-keys
                 for args = (funcall (lookup-key global-map key) t)
                 for mode-func = (lookup-key keymap key)
-                if (and (string-match "^C-c .+$" (key-description key))
-                        (functionp mode-func))
-                do (mykie:define-key-core
-                    "global-map" global-map key
-                    (append args (list (intern (format ":%S" mode)) mode-func)))
                 if (and (keymapp keymap)
                         (functionp mode-func)
-                        (not (string-match "^<?C-c>?$" (key-description key)))
                         (not (string-match "^mykie:" (symbol-name mode-func))))
                 do (mykie:clone-key
                     key args `(:default ,mode-func) `(,keymap-name . ,keymap))))))
@@ -636,29 +635,30 @@ Example:
 
 (defun mykie:define-key-core (keymap-name keymap key args)
   (lexical-let* ((key (mykie:format-key key)))
-    (if (eq nil (car args))
-        (define-key keymap key nil)
-      (lexical-let* ((args (append (mykie:parse-parenthesized-syntax args)
-                                   (unless (plist-get args :key-info)
-                                     `(:key-info (,key . ,keymap-name)))))
-                     ;; Workaround: Assign command name
-                     (sym (funcall mykie:make-funcname-function
-                                   args keymap key keymap-name)))
-        (when (and (equal "global-map" keymap-name)
-                   (< 1 (length (key-description key))))
-          (add-to-list 'mykie:global-keys key))
-        (fset sym (lambda (&optional get-args)
-                    (interactive)
-                    (if get-args args (funcall 'mykie:core args))))
-        (define-key keymap key sym)
-        (mykie:aif (plist-get args :clone)
-            (progn
-              (if (and (stringp it) (= 1 (length it)))
-                  (add-to-list 'mykie:self-insert-keys it)
-                (add-to-list 'mykie:global-keys it))
-              (mykie:clone-key
-               it (mykie:replace-property args `(:key-info (,it . "global-map")))
-               '(:default self-insert-command))))))))
+    (unless (member (key-description key) mykie:ignore-keybinds)
+      (if (eq nil (car args))
+          (define-key keymap key nil)
+        (lexical-let* ((args (append (mykie:parse-parenthesized-syntax args)
+                                     (unless (plist-get args :key-info)
+                                       `(:key-info (,key . ,keymap-name)))))
+                       ;; Workaround: Assign command name
+                       (sym (funcall mykie:make-funcname-function
+                                     args keymap key keymap-name)))
+          (when (and (equal "global-map" keymap-name)
+                     (< 1 (length (key-description key))))
+            (add-to-list 'mykie:global-keys key))
+          (fset sym (lambda (&optional get-args)
+                      (interactive)
+                      (if get-args args (funcall 'mykie:core args))))
+          (define-key keymap key sym)
+          (mykie:aif (plist-get args :clone)
+              (progn
+                (if (and (stringp it) (= 1 (length it)))
+                    (add-to-list 'mykie:self-insert-keys it)
+                  (add-to-list 'mykie:global-keys it))
+                (mykie:clone-key
+                 it (mykie:replace-property args `(:key-info (,it . "global-map")))
+                 '(:default self-insert-command)))))))))
 
 (defun mykie:clone-key (key args default-keyword-and-func &optional keymap-info)
   (lexical-let
