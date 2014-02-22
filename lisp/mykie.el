@@ -146,7 +146,7 @@ contains current minor-mode")
 
 (defvar mykie:region-func-predicate
   '(lambda ()
-     (and (use-region-p)
+     (and (mykie:region-p)
           (case mykie:current-state ((:region :region&C-u) t)))))
 
 (defvar mykie:ignore-keybinds '("C-c")
@@ -201,7 +201,7 @@ To change this variable use `add-to-list'.")
 (defvar mykie:precheck-function
   (lambda (condition-name)
     (pcase condition-name
-      (`mykie:region-conditions (use-region-p))
+      (`mykie:region-conditions (mykie:region-p))
       (`mykie:prefix-arg-conditions*
        (and current-prefix-arg
             (not (equal '(4) current-prefix-arg))))
@@ -337,6 +337,9 @@ The MODE is mode name's symbol such as 'emacs-lisp-mode."
 
 (defun mykie:repeat-p ()
   (equal this-command last-command))
+
+(defun mykie:region-p ()
+  (region-active-p))
 
 (defun mykie:get-C-u-times ()
   "Return times that your pushed C-u's times. And you can use mykie:C-u-num
