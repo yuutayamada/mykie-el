@@ -12,7 +12,7 @@
 (defvar test-C-u-keywords '())
 
 (defun cmd-do (expect map key)
-  (fset 'use-region-p (lambda () test-region-state))
+  (fset 'mykie:region-p (lambda () test-region-state))
   (with-temp-buffer
     (test-init expect)
     (when test-region-state (set-mark (point)))
