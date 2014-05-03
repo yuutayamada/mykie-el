@@ -4,7 +4,7 @@
 # Mykie.el | Command multiplexer
 
 Do you have enough keybinds in Emacs?
-No? Then this program strong help you to add other functions to
+No? Then this program strong helps you to add other functions to
 **a single** keybind.
 
 ## Installation
