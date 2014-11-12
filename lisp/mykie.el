@@ -311,7 +311,7 @@ The MODE is mode name's symbol such as 'emacs-lisp-mode."
                    (member mode mykie:minor-mode-ignore-list)))
        (attach-func
         (lambda (mykie-global-keys)
-          (loop with keymap-name = (concat (symbol-name mode) "-map")
+          (loop with keymap-name = (format "%s-map" mode)
                 with keymap      = (symbol-value (intern keymap-name))
                 for key in mykie-global-keys
                 for args = (funcall (lookup-key global-map key) t)
@@ -362,9 +362,6 @@ If return value is non-nil, then save the value to `mykie:current-thing'."
   (mykie:aif (thing-at-point thing)
       (setq mykie:current-thing it)))
 
-(defun mykie:concat-prefix (state prefix)
-  (intern (concat ":" prefix (symbol-name state))))
-
 (defun mykie:get-comment/string-state ()
   "Return :comment if current point is comment or string face."
   (when (nth 8 (save-excursion (syntax-ppss
@@ -389,7 +386,7 @@ condition if you specified prefix(whether current-prefix-arg or region
 active).
 The major-mode replaced to `major-mode' name.
 You can specify \"C-u&\" or \"region&\" to the PREFIX."
-  (lexical-let ((keyword (mykie:concat-prefix major-mode prefix)))
+  (lexical-let ((keyword (intern (format ":%s%s" (or prefix "") major-mode))))
     (when (plist-get mykie:current-args keyword)
       keyword)))
 
@@ -405,8 +402,8 @@ call `mykie' function."
                 ((times (mykie:get-C-u-times)))
               (if (= 1 times)
                   :C-u
-                (intern (concat ":C-u*" (number-to-string times))))))
-    (number (intern (concat ":M-" (number-to-string current-prefix-arg))))))
+                (intern (format ":C-u*%i" times)))))
+    (number (intern (format ":M-%i" current-prefix-arg)))))
 
 ;; Backward compatibility
 (defalias 'mykie:get-C-u-keyword 'mykie:get-prefix-arg-state)
