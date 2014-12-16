@@ -189,10 +189,7 @@ You can specify 'old to make old style funcname.")
                                "anonymous-func"
                              default-func))))))))
 
-(defvar mykie:use-original-key-predicate
-  (lambda ()
-    (cond ((bound-and-true-p multiple-cursors-mode) t)
-          (t nil)))
+(defvar mykie:use-original-key-predicate nil
   "Predicate whether you use original keybind before load mykie.el.")
 
 (defconst mykie:get-fallback-function
@@ -200,7 +197,8 @@ You can specify 'old to make old style funcname.")
     (cond ((mykie:ignore-mode-p)
            ;; Return default function
            (funcall mykie:get-default-function args))
-          ((funcall mykie:use-original-key-predicate)
+          ((and mykie:use-original-key-predicate
+                (funcall mykie:use-original-key-predicate))
            (let ((func (lookup-key
                         (bound-and-true-p mykie:original-map)
                         (car (plist-get args :key-info)))))
@@ -304,7 +302,7 @@ Example
      (funcall 'call-interactively func))
     (function (funcall func))
     (list     (funcall 'eval `(progn ,func))))
-  (unless (ido-active)
+  (unless (or (ido-active) (bound-and-true-p multiple-cursors-mode))
     (run-hooks 'post-command-hook))
   (mykie:run-hook 'after))
 
