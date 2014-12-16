@@ -1,4 +1,4 @@
-;;; mykie.el --- Command multiplexer: Register multiple functions to a keybind
+;;; mykie.el --- Command multiplexer: Register multiple functions to a keybind -*- lexical-binding: t; -*-
 
 ;; Copyright (C) 2013 by Yuta Yamada
 
