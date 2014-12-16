@@ -820,13 +820,13 @@ So you can register keybind like this:
      (mykie:core (quote ,args))))
 
 (defadvice mykie:combined-command
-  (around ad-parse-parenthesized activate)
+    (around ad-parse-parenthesized activate)
   "Parse args to convert parenthesized-syntax if it was needed."
   (ad-set-args 0 (mykie:parse-parenthesized-syntax (ad-get-args 0)))
   ad-do-it)
 
 (defadvice mykie
-  (around mykie:parse-parenthesized-syntax activate)
+    (around mykie:parse-parenthesized-syntax activate)
   "Parse args to convert parenthesized-syntax if it was needed."
   (ad-set-args 0 (mykie:parse-parenthesized-syntax (ad-get-args 0)))
   ad-do-it)
