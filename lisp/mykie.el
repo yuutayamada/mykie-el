@@ -172,14 +172,21 @@ To change this variable use `add-to-list'.")
 
 (defvar mykie:make-funcname-function
   (lambda (args keymap key &optional keymap-name)
-    (intern (format
-             "mykie:%s:%s:%s"
-             (or keymap-name "")
-             (replace-regexp-in-string " " "_" (key-description key))
-             ;; Some programs check command name by
-             ;; (string-match "self-insert-command" command-name)
-             (if (eq (funcall mykie:get-default-function args) 'self-insert-command)
-                 "self-insert-command" "key")))))
+    (let ((keyname (replace-regexp-in-string " " "_" (key-description key))))
+      (intern (if (equal global-map keymap)
+                  (format "mykie:%s:%s:%s"
+                          (or keymap-name "")
+                          keyname
+                          ;; Some programs check command name by
+                          ;; (string-match "self-insert-command" command-name)
+                          (if (eq (funcall mykie:get-default-function args)
+                                  'self-insert-command)
+                              "self-insert-command" "key"))
+                ;; Inject function name of :default function for
+                ;; other function describing library.
+                (format "mykie:%s:%s:%s" (plist-get args :default)
+                        (or keymap-name "")
+                        keyname))))))
 
 (defvar mykie:use-original-key-predicate
   (lambda ()
