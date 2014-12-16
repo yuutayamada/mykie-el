@@ -170,24 +170,31 @@ To change this variable use `add-to-list'.")
              if (member (nth i args) mykie:default-keywords)
              do (cl-return (plist-get args (car it))))))
 
-(defvar mykie:funcname-style nil
+(defvar mykie:funcname-style 'dwim
   "Style of `mykie:make-funcname-function'.
 You can specify 'old to make old style funcname.")
 
 (defvar mykie:make-funcname-function
-  (lambda (args _keymap key &optional keymap-name)
-    (let ((keyname (replace-regexp-in-string " " "_" (key-description key)))
-          (default-func (funcall mykie:get-default-function args)))
+  (lambda (args keymap key &optional keymap-name)
+    (let* ((keyname (replace-regexp-in-string " " "_" (key-description key)))
+           (default-func (funcall mykie:get-default-function args))
+           (funcname (if (listp default-func)
+                         "anonymous-func"
+                       default-func))
+           (self-or-normal
+            (if (eq default-func 'self-insert-command)
+                "self-insert-command"
+              "key")))
       (intern (format "mykie:%s:%s:%s"
                       (or keymap-name "") keyname
                       (cl-case mykie:funcname-style
-                        (old
-                         (if (eq default-func 'self-insert-command)
-                             "self-insert-command"
-                           "key"))
-                        (t (if (listp default-func)
-                               "anonymous-func"
-                             default-func))))))))
+                        ;; multiple-cursor refers to the key's function name
+                        ;; So I think probably same function name is best.
+                        (dwim (if (eq global-map keymap)
+                                  self-or-normal
+                                funcname))
+                        (old self-or-normal)
+                        (t   funcname)))))))
 
 (defvar mykie:use-original-key-predicate nil
   "Predicate whether you use original keybind before load mykie.el.")
