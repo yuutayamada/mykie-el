@@ -777,8 +777,7 @@ Examples:
               (t (mykie:define-key-core keymap-name keymap key property))))))
        (set-keys
         (lambda ()
-          (cl-loop with key-and-prop = '()
-                   with last = (1- (length args))
+          (cl-loop with last = (1- (length args))
                    with keymap-name = (symbol-name keymap-sym)
                    with keymap = (symbol-value keymap-sym)
                    for i from 0 to last
@@ -797,8 +796,7 @@ Examples:
 
 (defun mykie:parse-parenthesized-syntax (args)
   (cl-typecase (car args)
-    (list (cl-loop with new-args
-                   for (keyword . function) in args
+    (list (cl-loop for (keyword . function) in args
                    collect keyword into new-args
                    if (listp function)
                    collect `(progn ,@function) into new-args
