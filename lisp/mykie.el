@@ -170,23 +170,24 @@ To change this variable use `add-to-list'.")
              if (member (nth i args) mykie:default-keywords)
              do (cl-return (plist-get args (car it))))))
 
+(defvar mykie:funcname-style nil
+  "Style of `mykie:make-funcname-function'.
+You can specify 'old to make old style funcname.")
+
 (defvar mykie:make-funcname-function
-  (lambda (args keymap key &optional keymap-name)
-    (let ((keyname (replace-regexp-in-string " " "_" (key-description key))))
-      (intern (if (equal global-map keymap)
-                  (format "mykie:%s:%s:%s"
-                          (or keymap-name "")
-                          keyname
-                          ;; Some programs check command name by
-                          ;; (string-match "self-insert-command" command-name)
-                          (if (eq (funcall mykie:get-default-function args)
-                                  'self-insert-command)
-                              "self-insert-command" "key"))
-                ;; Inject function name of :default function for
-                ;; other function describing library.
-                (format "mykie:%s:%s:%s" (plist-get args :default)
-                        (or keymap-name "")
-                        keyname))))))
+  (lambda (args _keymap key &optional keymap-name)
+    (let ((keyname (replace-regexp-in-string " " "_" (key-description key)))
+          (default-func (funcall mykie:get-default-function args)))
+      (intern (format "mykie:%s:%s:%s"
+                      (or keymap-name "") keyname
+                      (cl-case mykie:funcname-style
+                        (old
+                         (if (eq default-func 'self-insert-command)
+                             "self-insert-command"
+                           "key"))
+                        (t (if (listp default-func)
+                               "anonymous-func"
+                             default-func))))))))
 
 (defvar mykie:use-original-key-predicate
   (lambda ()
