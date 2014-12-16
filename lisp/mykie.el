@@ -207,7 +207,7 @@ To change this variable use `add-to-list'.")
        (and current-prefix-arg
             (not (equal '(4) current-prefix-arg))))
       (`mykie:prefix-arg-conditions current-prefix-arg)
-      (condition-name t)))
+      (t t)))
   "Pre-check condition depending on CONDITION-NAME before check the
 CONDITION-NAME's condition. If you add conditions to
 `mykie:group-conditions', then you can add your precheck condition by
