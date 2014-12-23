@@ -659,7 +659,6 @@ Example:
         (let* ((args (append (mykie:parse-parenthesized-syntax args)
                              (unless (plist-get args :key-info)
                                `(:key-info (,key . ,keymap-name)))))
-               ;; Workaround: Assign command name
                (sym (funcall mykie:make-funcname-function
                              args keymap key keymap-name)))
           (when (and (equal "global-map" keymap-name)
