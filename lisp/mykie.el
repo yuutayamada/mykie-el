@@ -664,9 +664,7 @@ Example:
           (when (and (equal "global-map" keymap-name)
                      (< 1 (length (key-description key))))
             (add-to-list 'mykie:global-keys key))
-          (fset sym (lambda (&optional get-args)
-                      (interactive)
-                      (if get-args args (funcall 'mykie:core args))))
+          (fset sym (mykie:make-mykie-function args))
           (define-key keymap key sym)
           (mykie:aif (plist-get args :clone)
               (progn
@@ -676,6 +674,11 @@ Example:
                 (mykie:clone-key
                  it (mykie:replace-property args `(:key-info (,it . "global-map")))
                  '(:default self-insert-command)))))))))
+
+(defun mykie:make-mykie-function (args)
+  (lambda (&optional get-args)
+    (interactive)
+    (if get-args args (funcall 'mykie:core args))))
 
 (defun mykie:clone-key (key args default-keyword-and-func &optional keymap-info)
   (let
