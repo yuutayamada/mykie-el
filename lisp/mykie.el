@@ -782,14 +782,20 @@ Examples:
        (keymap-sym (cdr pair))
        (set-key
         (lambda (key-and-prop &optional keymap-name keymap)
-          (let
+          (let*
               ((key (car key-and-prop))
                (property
                 (mykie:parse-parenthesized-syntax (cdr key-and-prop))))
             (cl-case order
               (with-self-key
                (mykie:define-key-with-self-key-core key property))
-              (t (mykie:define-key-core keymap-name keymap key property))))))
+              (t ; apply defining function without :default
+               (when (not (or (member :default property)
+                              (member t property)))
+                 (cl-case (length property)
+                   (1 (setq property (append '(:default) property)))
+                   (2 (setq property (append '(:default) `(,property))))))
+               (mykie:define-key-core keymap-name keymap key property))))))
        (set-keys
         (lambda ()
           (cl-loop with last = (1- (length args))
