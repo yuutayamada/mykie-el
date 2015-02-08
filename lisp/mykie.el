@@ -833,6 +833,22 @@ Examples:
                    finally return new-args))
     (symbol args)))
 
+(defmacro mykie:define-prefix-key (parent-map prefix-key pred &rest mykie-keys)
+  "Make prefix key and register specific key."
+  `(let* ((key (mykie:format-key ,prefix-key))
+          (keyname (key-description key))
+          (prefix-map (intern (format "mykie:%s-prefix-%s"
+                                      (quote ,parent-map) keyname)))
+          (parent (symbol-value (quote ,parent-map))))
+     (define-prefix-command prefix-map)
+     (mykie:set-keys-core prefix-map (quote ,mykie-keys))
+     (fset prefix-map
+           `(lambda ()
+              (interactive)
+              (set-transient-map ,prefix-map ,,pred)))
+     (define-key parent key prefix-map)))
+(put 'mykie:define-prefix-key 'lisp-indent-function 2)
+
 (defmacro mykie:combined-command (&rest args)
   "This macro return lambda form with `mykie'.
 So you can register keybind like this:
