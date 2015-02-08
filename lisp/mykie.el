@@ -632,10 +632,18 @@ Otherwise return KW-AND-CONDITION's first element."
       (before (run-hooks 'mykie:region-before-init-hook))
       (after  (run-hooks 'mykie:region-after-init-hook)))))
 
+(defun mykie:kbd (key)
+  (kbd key))
+
+;; TODO: Fix this to work around in old version Emacs
+(when (version< emacs-version "24.3")
+  (defadvice mykie:kbd (around macro->function activate)
+    (setq ad-return-value (apply (macroexpand (list 'kbd (ad-get-arg 0)))))))
+
 (defun mykie:format-key (key)
   (cl-typecase key
     (vector key)
-    (string (kbd key))
+    (string (mykie:kbd key))
     (t (error "Invalid key"))))
 
 (defmacro mykie:define-key (keymap key &rest args)

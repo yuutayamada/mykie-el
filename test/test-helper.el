@@ -16,7 +16,7 @@
   (with-temp-buffer
     (test-init expect)
     (when test-region-state (set-mark (point)))
-    (call-interactively (lookup-key map (kbd key)))
+    (call-interactively (lookup-key map (mykie:kbd key)))
     (case expect
       (readonly (toggle-read-only 0))
       ((url C-u&url)     (should (equal test-url  mykie:current-thing)))
