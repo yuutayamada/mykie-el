@@ -5,7 +5,7 @@
 ;; Author: Yuta Yamada <cokesboy"at"gmail.com>
 ;; URL: https://github.com/yuutayamada/mykie-el
 ;; Version: 0.2.1
-;; Package-Requires: ((emacs "24.3"))
+;; Package-Requires: ((emacs "24.3") (cl-lib "0.5"))
 ;; Keywords: Emacs, configuration, keybind
 
 ;;; License:

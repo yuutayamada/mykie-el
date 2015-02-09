@@ -6,4 +6,5 @@
 
 (development
   ;; Unit test libraries
-  (depends-on "ert-runner"))
+  (depends-on "ert-runner")
+  (depends-on "cl-lib"))
