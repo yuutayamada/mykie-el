@@ -63,7 +63,7 @@ You don't need to contain region checking function. Mykie will check
 whether region is active or not before check this variable.")
 
 (defvar mykie:prefix-arg-conditions*
-  '(("^:\\(M-\\|C-u\\*\\)[0-9]+$" . (mykie:get-prefix-arg-state)))
+  '(("^:\\(M-\\|C-u\\*\\)[0-9]+!?$" . (mykie:get-prefix-arg-state)))
   "This variable is used at `mykie' function.
 Mykie will check whether current-prefix-arg is non-nil
 and make sure user pushed multiple time C-u more than one time.")
@@ -234,6 +234,7 @@ is exists.")
 (defvar mykie:current-point "")
 (defvar mykie:current-thing nil)
 (defvar mykie:current-file nil)
+(defvar mykie:current-keyword nil)
 (defvar mykie:region-str "")
 (defvar mykie:C-u-num nil)
 (defconst mykie:original-map (copy-keymap global-map)
@@ -301,14 +302,18 @@ Example
   (mykie:run-hook 'before)
   (unless (ido-active)
     (run-hooks 'pre-command-hook))
-  (cl-typecase func
-    (command
-     ;; Do not use `setq' because the command loop overrides
-     ;; `last-command', so use timer here.
-     (run-with-timer 0 nil 'set 'last-command func)
-     (funcall 'call-interactively func))
-    (function (funcall func))
-    (list     (funcall 'eval `(progn ,func))))
+  (let ((current-prefix-arg
+         (if (mykie:contain-exclamation-p mykie:current-state)
+             nil
+           current-prefix-arg)))
+    (cl-typecase func
+      (command
+       ;; Do not use `setq' because the command loop overrides
+       ;; `last-command', so use timer here.
+       (run-with-timer 0 nil 'set 'last-command func)
+       (funcall 'call-interactively func))
+      (function (funcall func))
+      (list     (funcall 'eval `(progn ,func)))))
   (unless (or (ido-active) (bound-and-true-p multiple-cursors-mode))
     (run-hooks 'post-command-hook))
   (mykie:run-hook 'after))
@@ -411,13 +416,16 @@ C-u's pushed times).
 If current-prefix-arg is number, return :M-N(the N is replaced number
 like M-1.). You can change the M-N's number by pushing M-[0-9] before
 call `mykie' function."
-  (cl-typecase current-prefix-arg
-    (list   (let
-                ((times (mykie:get-C-u-times)))
-              (if (= 1 times)
-                  :C-u
-                (intern (format ":C-u*%i" times)))))
-    (number (intern (format ":M-%i" current-prefix-arg)))))
+  (let ((exclamation (if (mykie:contain-exclamation-p) "!" "")))
+    (cl-typecase current-prefix-arg
+      (list   (let ((times (mykie:get-C-u-times)))
+                (if (= 1 times)
+                    :C-u
+                  (intern (format ":C-u*%i%s" times exclamation)))))
+      (number (intern (format ":M-%i%s" current-prefix-arg exclamation))))))
+
+(defun mykie:contain-exclamation-p (&optional keyword)
+  (string-match ":.+!$" (symbol-name (or keyword mykie:current-keyword))))
 
 ;; Backward compatibility
 (defalias 'mykie:get-C-u-keyword 'mykie:get-prefix-arg-state)
@@ -581,15 +589,14 @@ You can set below keyword to ARGS by default:
                             if (or (eq expect keyword)
                                    (and (stringp expect)
                                         (string-match
-                                         expect (symbol-name keyword))))
+                                         expect (symbol-name keyword))
+                                        (setq mykie:current-keyword keyword)))
                             do (cl-return (nth j conditions)))
            do (when (eq keyword (mykie:check it))
                 (cl-return keyword))
            else if (member keyword default-keywords)
            do (setq default-keyword keyword)
-           finally return (when default-keyword
-                            (mykie:reset-prefix-arg default-keyword)
-                            default-keyword)))
+           finally return default-keyword))
 
 (defun mykie:check (kw-and-condition)
   "Return keyword if checking condition is succeed.
@@ -613,18 +620,12 @@ Otherwise return KW-AND-CONDITION's first element."
            finally return (cl-loop with last = (1- (length mykie:current-args))
                                    for i from 0 to last by 2
                                    if (member (nth i args) default-keywords) do
-                                   (mykie:reset-prefix-arg (car it))
                                    (cl-return (car it)))))
 
 (defun mykie:get-default-condition-keyword (conditions-sym)
   "Get condition specific keyword that match CONDITIONS-SYM from
 `mykie:default-condition-keyword-alist'."
   (car (assoc-default conditions-sym mykie:default-condition-keyword-alist)))
-
-(defun mykie:reset-prefix-arg (default-kw)
-  "Reset `current-prefix-arg' if DEFAULT-KW is :C-u!."
-  (when (eq :C-u! default-kw)
-    (setq current-prefix-arg nil)))
 
 (defun mykie:run-hook (direction)
   (when (funcall mykie:region-func-predicate)
