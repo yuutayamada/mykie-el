@@ -836,19 +836,40 @@ Examples:
                    finally return new-args))
     (symbol args)))
 
-(defmacro mykie:define-prefix-key (parent-map prefix-key pred &rest mykie-keys)
-  "Make prefix key and register specific key."
+(defmacro mykie:define-prefix-key (parent-map prefix-key params &rest mykie-keys)
+  "Make prefix key with MYKIE-KEYS(mykielized keybindings).
+
+This function takes PARENT-MAP as parent of PREFIX-KEY.
+
+The PARAMS can take several parameters of anonymous function:
+  :keep   -- keep prefix keymap as long as this function return non-nil
+  :exit   -- exit prefix keymap when the function return non-nil
+  :before -- call this function before entering prefix keymap
+  :after  -- call this function after exited prefix keymap
+
+Note that those keyword PARAMS are optional; which means if you set
+nil to the PARAMS, created function will be exited after you type any
+created key."
   `(let* ((key (mykie:format-key ,prefix-key))
           (keyname (key-description key))
           (prefix-map (intern (format "mykie:%s-prefix-%s"
                                       (quote ,parent-map) keyname)))
+          (pred
+           `(lambda ()
+              (let ((exit ,(plist-get (quote ,params) :exit))
+                    (keep ,(plist-get (quote ,params) :keep)))
+                (or (when (functionp keep) (funcall keep))
+                    (when (functionp exit) (not (funcall exit)))))))
+          (on-enter (plist-get (quote ,params) :before))
+          (on-exit  (plist-get (quote ,params) :after))
           (parent (symbol-value (quote ,parent-map))))
      (define-prefix-command prefix-map)
      (mykie:set-keys-core prefix-map (quote ,mykie-keys))
      (fset prefix-map
            `(lambda ()
               (interactive)
-              (set-transient-map ,prefix-map ,,pred)))
+              (when (functionp ,on-enter) (funcall ,on-enter))
+              (set-transient-map ,prefix-map ,pred ,on-exit)))
      (define-key parent key prefix-map)))
 (put 'mykie:define-prefix-key 'lisp-indent-function 2)
 
