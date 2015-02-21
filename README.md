@@ -1,11 +1,13 @@
 [![Build Status](https://travis-ci.org/yuutayamada/mykie-el.png?branch=master)](https://travis-ci.org/yuutayamada/mykie-el)
-[![Gittip](http://img.shields.io/gittip/yuutayamada.png)](https://www.gittip.com/yuutayamada)
 
 # Mykie.el | Command multiplexer
 
 Do you have enough keybinds in Emacs?
 No? Then this program strong helps you to add other functions to
 **a single** keybind.
+
+## Requirement
+This package needs Emacs 24.3 or higher.
 
 ## Installation
 
@@ -14,7 +16,7 @@ You can install from MELPA by M-x package-install RET mykie.
 ## Note
 
 From v0.2.0, quote is not needed anymore when you register keybinds.
-So if you are already using old mykie.el, please delete needless
+So if you ware already using old mykie.el, please delete needless
 quotes before you use new mykie.el.
 Also condition's form was changed from v0.2.0.
 See Customizing section if you want to add specific condition.
@@ -185,6 +187,32 @@ You can specify below forms.
    :region  query-replace-regexp)
 ```
 
+### Shorthand for key binding and unbinding
+mykie's :default keywords is redundant to specify just one function.
+If you don't specify :default keyword and the function is only one,
+you can use shorthand of `mykie:set-keys` function to register and
+un-register multiple keybinds.
+
+Registering keybinds is like this:
+```lisp
+(mykie:set-keys nil ; <- global-map
+  "C-0" (message "foo") ; Eval as S-expression
+  "C-1" emacs-version   ; Eval as command
+  "C-2"
+  :default (message "You can combine :default keyword as well.")
+  :C-u     (message "You can combine other keyword as well.")
+  )
+```
+
+Un-registering keybinds is like this:
+```lisp
+(mykie:set-keys nil ; <- global-map
+  "C-0" "C-1" ; <- those keys are unregistered
+  ;; You can register keybinds in this function
+  "C-3" :default (message "Hello")
+  )
+```
+
 ### Key Definition
 
 There are four patterns to specify `mykie` keybinds.
@@ -286,9 +314,7 @@ To avoid major-mode key overriding, you can specify specific modes like this:
 ```
 
 You can use below configuration to avoid overriding major-mode key.
-This way can ignore overriding major-mode key only specific keybind.
-So you can't play tetris if current major-mode that you specified to
-:ignore-major-modes has same keybind.
+This way ignores overriding major-mode keys.
 
 ```lisp
 (setq mykie:use-major-mode-key-override 'both)
@@ -301,7 +327,7 @@ So you can't play tetris if current major-mode that you specified to
   :ignore-major-modes (diff-minor-mode))
 ```
 
-You can specify specific mode by your hand.
+You can specify specific mode.
 
 ```lisp
 (setq mykie:use-major-mode-key-override nil)
@@ -313,7 +339,6 @@ You can specify specific mode by your hand.
 
 Below example is common keywords.
 You can make sure available full keywords at `mykie:conditions` variable.
-(mykie.el is using **state** as terminology of condition's keyword)
 
 -   Normal Keywords Example
 ```lisp
@@ -439,11 +464,11 @@ There is a similar command that do first command and then wait user input.
 
 Above command do newline-and-indent and then wait user input.
 
-## Customizing(WIP)
+## Customizing own condition
 
 You can change or attach `mykie`s conditions.
 
-Here is an example to attach conditions.
+Here is an example to attach your customized conditions.
 
 ```lisp
 (setq mykie:normal-conditions
@@ -457,12 +482,6 @@ Here is an example to attach conditions.
                                              (`"24.3.1" :24.3.1)
                                              (`"24.5.1" :24.5.1))))))
 ```
-
-## Known issues
-Mykie.el can't use with multiple-cursors.el.
-To avoid this problem, mykie use global-map's key before load
-mykie.el.
-Pull request is welcome:)
 
 ## Contributor(s)
 Here's a [list](https://github.com/yuutayamada/mykie-el/contributors)
