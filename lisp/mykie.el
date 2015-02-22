@@ -817,15 +817,19 @@ Examples:
     (funcall set-keys)))
 
 (defun mykie:format-property (order property)
-  (mykie:parse-parenthesized-syntax
-   (if (eq order 'with-self-key)
-       property
-     (if (not (or (member :default property)
-                  (member t property)))
-         (cl-case (length property)
-           (1 (append '(:default) property))
-           (2 (append '(:default) `(,property))))
-       property))))
+  (let ((props (if (condition-case _err
+                       (keywordp (caar property))
+                     (error nil))
+                   (mykie:parse-parenthesized-syntax property)
+                 property)))
+    (if (eq order 'with-self-key)
+        props
+      (if (not (or (member :default props)
+                   (member t props)))
+          (cl-case (length props)
+            (1 (append '(:default) props))
+            (2 (append '(:default) `(,props))))
+        props))))
 
 (defun mykie:parse-parenthesized-syntax (args)
   (cl-typecase (car args)
