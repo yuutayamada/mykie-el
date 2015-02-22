@@ -3,30 +3,21 @@
 # Mykie.el | Command multiplexer
 
 Do you have enough keybinds in Emacs?
-No? Then this program strong helps you to add other functions to
+No? Then this program strongly helps you to add other functions to
 **a single** keybind.
 
 ## Requirement
+
 This package needs Emacs 24.3 or higher.
 
 ## Installation
 
 You can install from MELPA by M-x package-install RET mykie.
 
-## Note
-
-From v0.2.0, quote is not needed anymore when you register keybinds.
-So if you ware already using old mykie.el, please delete needless
-quotes before you use new mykie.el.
-Also condition's form was changed from v0.2.0.
-See Customizing section if you want to add specific condition.
-And fuzzy order(lazy order) was turn on by default.
-See fuzzy order section too.
-
 ## Configuration
 
 Below configuration is common setting for mykie.el.
-You can see more example in example section.
+You can see more example in mykie-example file.
 Note: below `mykie:use-major-mode-key-override` is a bit complex,
 See below section 'Major-mode's keys overriding' for details.
 
@@ -66,24 +57,6 @@ You can specify like this too.
    :region   query-replace-regexp)
 ```
 
-## Parenthesized style
-
-You can use parenthesized style too. Like this:
-
-```lisp
-(mykie:global-set-key "C-j"
-  (:default (delete-trailing-whitespace)
-            (case major-mode
-              (org-mode (org-return-indent)
-              (t        (newline-and-indent)))))
-  (:C-u&url browse-url-at-point)
-  (:C-u&eolp (fill-region (point-at-bol) (point-at-eol))))
-```
-
-You can use mykie:define-key, mykie:global-set-key,
-mykie:define-key-with-self-key, and mykie:set-keys to register
-keybind with parenthesized style.
-
 ## Available Keywords
 
 You can specify below keywords to mykie's arguments such as :default
@@ -95,9 +68,10 @@ Note: below keyword can specify function only. See Available Forms too.
 |:-------------------|:----------- |
 | :default or t      | default function, call this if conditions aren't matched all conditions
 | :C-u               | Call this if you pushed C-u key before pushing the key
-| :C-u!              | like :C-u but reset `current-prefix-arg`
-| :C-u*N             | Call this if you pushed N times of C-u(replace N to number)
-| :M-N               | Call this if you pushed such as M-1(replace N to number)
+| :C-u!              | like :C-u, but reset `current-prefix-arg`
+| :C-u*N             | Call this if you pushed N times of C-u(replace N to a number)
+| :C-u*N!            | like :C-u*N, but reset `current-prefix-arg`
+| :M-N               | Call this if you pushed such as M-1(replace N to a number)
 | :region            | Call this if you are selecting region
 | :region&C-u        | Call this if you satisfied :region & :C-u condition
 | :repeat            | Call this if you repeat same command at same point
@@ -138,110 +112,38 @@ See below description.
 | :deactivate-region  | symbol         | deactivate selecting region after mykie executed command. You can specify this t, 'region, 'region&C-u. |
 | :region-handle-flag | symbol         | Do copying or killing before command executing. This function is convenience if you want to use kill-ring's variable. But there is mykie:region-str variable that always store region's strings. |
 
-## I can't remember all keywords
-Me too.
-If you can use [Helm](https://github.com/emacs-helm/helm), then
-you can use `helm-mykie-keywords` command that show available keywords.
-
-## Fuzzy Ordering
-This function name was lazy ordering until v0.1.1.
-From v0.2.0, the name was renamed to fuzzy ordering and this function is
-turn on by default.
-
-You can change ordering by each key-bindings when you register key-bindings.
-Below example's C-j binding is prior :C-u&url than :C-u&eolp.
-But someone might want prior than :C-u&eolp.
-
-I(author) couldn't know which is prior for user.
-This feature can change order by your hand without changing configuration.
-
-```lisp
-(mykie:set-keys nil
-   "C-0"
-   :default  (message "hi")
-   :C-u&url  (browse-url-at-point) ; prioritize :C-u&url than :C-u&eolp
-   :C-u&eolp (fill-region (point-at-bol) (point-at-eol))
-   :C-u      (message "hello"))
-```
-
-Note: This function is available only related same conditions.
-i.e., you can't change ordering across region & C-u.
-Note: You don't need care :default keyword's order. :default or t
-keyword will call function if all condition was failed.
-
-## Examples
-
-Below codes are samples for mykie.el
-
-### Available Forms
-
-You can specify below forms.
-
-```lisp
-(mykie:global-set-key "C-0"
-   ;; You can specify lambda form.
-   :default (lambda () (minibuffer-message "default"))
-   ;; You can specify list form.
-   :C-u     (minibuffer-message "You pushed C-u")
-   ;; You can specify symbol form for interactive command or function..
-   :region  query-replace-regexp)
-```
-
-### Shorthand for key binding and unbinding
-mykie's :default keywords is redundant to specify just one function.
-If you don't specify :default keyword and the function is only one,
-you can use shorthand of `mykie:set-keys` function to register and
-un-register multiple keybinds.
-
-Registering keybinds is like this:
-```lisp
-(mykie:set-keys nil ; <- global-map
-  "C-0" (message "foo") ; Eval as S-expression
-  "C-1" emacs-version   ; Eval as command
-  "C-2"
-  :default (message "You can combine :default keyword as well.")
-  :C-u     (message "You can combine other keyword as well.")
-  )
-```
-
-Un-registering keybinds is like this:
-```lisp
-(mykie:set-keys nil ; <- global-map
-  "C-0" "C-1" ; <- those keys are unregistered
-  ;; You can register keybinds in this function
-  "C-3" :default (message "Hello")
-  )
-```
-
-### Key Definition
-
+## Basic Usage
 There are four patterns to specify `mykie` keybinds.
 
-- `mykie:global-set-key`
+`mykie:global-set-key`  
+
 ```lisp
 (mykie:global-set-key "C-0"
   :default (message "hi"))
 ```
 
-- `mykie:define-key`
+`mykie:define-key`  
+
 ```lisp
 (mykie:define-key emacs-lisp-mode "C-0"
   :default (message "hi hello"))
 ```
 
--  `mykie:define-key-with-self-key`  
-This function define key to self-insert-key(like [a-zA-Z]) with
-`mykie` functions.
-This function add :default self-insert-command automatically to
-specified key.
+`mykie:define-key-with-self-key`  
+
+This function binds mykie keybinds to self-insert-key(like [a-zA-Z]).
+
 ```lisp
 (mykie:define-key-with-self-key
     "a" :C-u (message "I am C-u"))
 ```
 
-- `mykie:set-keys`  
-This function is convenience if you want to set multiple keybinds.
-For global-map
+`mykie:set-keys`  
+
+This function is convenience if you want to set multiple keybinds.  
+
+For global-map  
+
 ```lisp
 (mykie:set-keys nil
   "C-a"
@@ -251,7 +153,8 @@ For global-map
   :default     (end-of-line)
   :C-u         (message "Hello"))
 ```
-For specific keymap
+For specific keymap  
+
 ```lisp
 ;; Set keybinds to specific keymap:
 (mykie:set-keys emacs-lisp-mode-map
@@ -262,7 +165,9 @@ For specific keymap
   :default (message "C-2")
   :C-u     (message "C-2+C-u"))
 ```
-For self-insert-command like "a", "b", "c" etc..
+
+For self-insert-command like "a", "b", "c" etc..  
+
 ```lisp
 ;; Set keybinds for self-insert-key
 ;; You don't need to specify :default state, it's specified to
@@ -275,10 +180,125 @@ For self-insert-command like "a", "b", "c" etc..
   :C-u (message "called b"))
 ```
 
-### Major-mode's keys overriding
+## Too many keyword...
+
+If you can use [Helm](https://github.com/emacs-helm/helm), then
+`helm-mykie-keywords` shows you available keywords.
+
+## Fuzzy Ordering
+
+This function name was lazy ordering until v0.1.1.
+From v0.2.0, the name was renamed to fuzzy ordering and this function is
+turn on by default.
+
+You can change the order of commands by the order of each key-bindings
+when you register key-bindings.
+Below C-j binding precedes :C-u&url than :C-u&eolp.
+
+```lisp
+(mykie:set-keys nil
+   "C-0"
+   :default  (message "hi")
+   :C-u&url  (browse-url-at-point) ; prioritize :C-u&url than :C-u&eolp
+   :C-u&eolp (fill-region (point-at-bol) (point-at-eol))
+   :C-u      (message "hello"))
+```
+
+## Shorthand for key binding and unbinding
+mykie's :default keywords is redundant to specify just one function.
+If you don't specify :default keyword and the function is only one,
+you can use shorthand of `mykie:set-keys` function to register and
+un-register multiple keybinds.
+
+To register keybinds, you can write like this:
+```lisp
+(mykie:set-keys nil ; <- global-map
+  "C-0" (message "foo") ; Eval as S-expression
+  "C-1" emacs-version   ; Eval as command
+  "C-2"
+  :default (message "You can combine :default keyword as well.")
+  :C-u     (message "You can combine other keyword as well.")
+  )
+```
+
+To Un-register keybinds, you can write like this:
+```lisp
+(mykie:set-keys nil ; <- global-map
+  "C-0" "C-1" ; <- those keys are unregistered
+  ;; You can register keybinds in this function
+  "C-3" :default (message "Hello")
+  )
+```
+
+## Nested Mykie keybinds
+
+You can implement your function with `mykie' function.
+
+```lisp
+(global-set-key (kbd "C-o") 
+                '(lambda ()
+                   (interactive)
+                   (mykie :default (message "default")
+                          :C-u (mykie :emacs-lisp-mode 
+                                      (message "You can call filter condition")))))
+```
+
+## Prefix key with mykielized keybinds
+
+You can make prefix keymap with mykielized keybinds. To be simple, I
+omitted :default keywords in below example, but you can add other
+keyword that I showed above. Note that this function can take some
+parameters and you can handle the exit time by :keep and :exit keyword
+with your anonymous function. Also you can specify kind of wrapping
+function by using :before and :after with your specified function.
+These guys are convenience if you want to change color of modeline,
+cursor, or etc. when you do in and out of keymaps.
+
+```lisp
+(mykie:define-prefix-key global-map "M-j"
+  (:keep
+   (lambda ()
+      ;; you can keep this prefix keymap as long as
+      ;; this function return non-nil.
+      ;; ... Implement something ...
+      )
+   :exit ; exit this prefix keymap when this function return non-nil
+   (lambda ()
+     (or (member last-command
+                 '(mc/keyboard-quit
+                   self-insert-command
+                   mc/insert-numbers))
+         (eq last-command-event (string-to-char "q"))))
+   :before
+   (lambda () ; this function called before you enter this prefix keymap
+     (set-face-background 'modeline "red"))
+   :after
+   (lambda () ; this function called when you exit this prefix keymap
+     (set-face-background 'modeline "blue")))
+  ;; multiple-cursors ;;
+  ;; You can use other keyword like :region or something, but
+  ;; please don't forget :default keyword as well.
+  "a"   mc/mark-all-like-this
+  "q"   :default nil
+  "n"   mc/skip-to-next-like-this
+  "p"   mc/skip-to-previous-like-this
+  "j"   mc/mark-next-like-this
+  "k"   mc/mark-previous-like-this
+  "m"   mc/mark-more-like-this-extended
+  "u"   mc/unmark-next-like-this
+  "U"   mc/unmark-previous-like-this
+  "*"   mc/mark-all-like-this
+  "M-j" mc/mark-all-like-this-dwim
+  "i"   mc/insert-numbers
+  "o"   mc/sort-regions
+  "O"   mc/reverse-regions)
+```
+
+## Overriding of Major-Mode
+
 I think almost Emacs lisp package do not use the major-mode keybind
-with C-u prefix.(of course there are exception like Magit)
-This section explain how to attach mykie's function of global-map to
+with C-u prefix. (of course there are exception like Magit)
+This section explains how to attach mykie's function of global-map to
 specific keymap.
 
 Here is an example:
@@ -304,16 +324,17 @@ without self-insert-command keys.
 'self means use overriding major-mode keys by self-insert-command keys.
 if you set nil, then don't overriding major-mode key.
 
-I was mentioned before, there is a problem, several program is using
-:C-u key to change the key's behavior.
-To avoid major-mode key overriding, you can specify specific modes like this:
+Although, I mentioned before, there is a problem, several program are
+using :C-u key to change the behavior of keys.
+To avoid major-mode key overriding, you can specify specific modes
+like this:
 
 ```lisp
 (setq mykie:major-mode-ignore-list '(emacs-lisp-mode)
       mykie:minor-mode-ignore-list '(diff-minor-mode))
 ```
 
-You can use below configuration to avoid overriding major-mode key.
+Also you can use below configuration to avoid overriding major-mode key.
 This way ignores overriding major-mode keys.
 
 ```lisp
@@ -335,98 +356,8 @@ You can specify specific mode.
 (mykie:attach-mykie-func-to 'emacs-lisp-mode)
 ```
 
-### Available Keyword(State)
+## Continuous Command
 
-Below example is common keywords.
-You can make sure available full keywords at `mykie:conditions` variable.
-
--   Normal Keywords Example
-```lisp
-(mykie:global-set-key "C-0"
-   :default    (message "this is default function")
-   :repeat     (message "this is executed if pushed same point")
-   :bolp       (message "this is called if pushed at bolp")
-   :eolp       (message "this is called if pushed at eolp")
-   :C-u&bolp   (message "this is called if pushed at bolp after pushed C-u")
-   :C-u&eolp   (message "this is called if pushed at eolp after pushed C-u")
-   :region     (message "this is called if pushed it when selecting region")
-   :region&C-u (message "this is called if pushed it after pushed C-u when selecting region"))
-```
-
--   C-u*N example
-You can utilize C-u's pushed times.
-For example:
-```lisp
-(mykie:global-set-key "C-0"
-   :default (message "default func")
-   :C-u     (message "C-u")
-   :C-u*2   (message "You pushed C-u 2 times aren't you?")
-   :C-u*3   (message "You pushed C-u 3 times aren't you?")
-   :C-u*4   (message "You pushed C-u 4 times aren't you?")
-   :region  query-replace-regexp)
-```
-
--   M-N example
-You can utilize M-[0-9] pushing times.
-```lisp
-(mykie:global-set-key "C-0"
-   :default (message "default func")
-   :C-u     (message "C-u")
-   :M-1     (message "You pushed M-1 aren't you?")
-   :M-2     (message "You pushed M-2 aren't you?")
-   :M-3     (message "You pushed M-3 aren't you?")
-   :M-12    (message "You might pushed M-1 and M-2 aren't you?")
-   :region  query-replace-regexp)
-```
-As you may know, you can do commands
-[M-1 M-2 C-0], [M-1 2 C-0], or [C-u 1 2 C-0] to call :M-12's function.
-
--   :email, :url example
-You can utilize :email and :url keyword.
-And you can use `mykie:current-thing` variable that store thing's
-variable.
-```lisp
-(mykie:global-set-key "C-0"
-   :C-u&url            (browse-url-firefox mykie:current-thing)
-   :email              (message mykie:current-thing)
-   :default            (message "default"))
-;; example ↓ try C-0 on below url or email address
-;; http://www.google.com
-;; example@email
-```
-
--   :clone example
-Below an example can use comment-dwim function even terminal Emacs by C-;
-key. (Because terminal Emacs ignore "C-" key.)
-```lisp
-(mykie:set-keys nil
-  "C-;"
-  :default doctor
-  :region  comment-dwim
-  :clone   ";")
-```
-
--   :prog example
-This is an example using [quickrun.el](https://github.com/syohex/emacs-quickrun).
-```lisp
-(mykie:set-keys nil
-  "M-q"
-  :default     tetris
-  :prog        quickrun
-  :C-u&prog    quickrun-with-arg
-  :region&prog quickrun-region)
-```
-
-- Unbind key
-You can unbind keybind by specifying nil as argument:
-```lisp
-(mykie:set-keys org-mode-map
-  "C-j" nil)
-```
-
-### Continuous Command
-
-Below mykie:loop function is trial now.
 You can set keybinds and functions' pair.
 Key-bindings can specify [a-zA-Z] only.
 (Maybe this function fail if you set existing keybind)
@@ -483,9 +414,39 @@ Here is an example to attach your customized conditions.
                                              (`"24.5.1" :24.5.1))))))
 ```
 
+## Parenthesized style
+
+You can use parenthesized style.
+But, I don't implement :default short hand feature in this style.
+So, please keep in your mind, or use normal style.
+
+```lisp
+(mykie:global-set-key "C-j"
+  (:default (delete-trailing-whitespace)
+            (case major-mode
+              (org-mode (org-return-indent)
+              (t        (newline-and-indent)))))
+  (:C-u&url browse-url-at-point)
+  (:C-u&eolp (fill-region (point-at-bol) (point-at-eol))))
+```
+
+You can use mykie:define-key, mykie:global-set-key,
+mykie:define-key-with-self-key, and mykie:set-keys to register
+keybind with parenthesized style.
+
 ## Contributor(s)
 Here's a [list](https://github.com/yuutayamada/mykie-el/contributors)
 of all the people who have contributed to the development of mykie.
+
+## Note
+
+From v0.2.0, quote is not needed anymore when you register keybinds.
+So if you ware already using old mykie.el, please delete needless
+quotes before you use new mykie.el.
+Also condition's form was changed from v0.2.0.
+See Customizing section if you want to add specific condition.
+And fuzzy order(lazy order) was turn on by default.
+See fuzzy order section too.
 
 ## License
 `mykie.el` is released under GPL v3.

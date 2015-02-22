@@ -1,0 +1,103 @@
+
+;;; Commentary
+;; mykie.el example file
+;;; Code:
+(require 'mykie)
+
+;; Basic usage
+(mykie:global-set-key "C-0"
+  ;; You can specify lambda form.
+  :default (lambda () (minibuffer-message "default"))
+  ;; You can specify list form.
+  :C-u     (minibuffer-message "You pushed C-u")
+  ;; You can specify symbol form for interactive command or function..
+  :region  query-replace-regexp)
+
+;; Key Definition
+;; There are four patterns to specify `mykie` keybinds.
+
+;; `mykie:global-set-key`
+(mykie:global-set-key "C-0"
+  :default (message "hi"))
+
+;; `mykie:define-key`
+(mykie:define-key emacs-lisp-mode "C-0"
+  :default (message "hi hello"))
+
+;; Below example is common keywords.
+;; You can make sure available full keywords at `mykie:conditions` variable.
+
+;; -   Normal Keywords Example
+(mykie:global-set-key "C-0"
+   :default    (message "this is default function")
+   :repeat     (message "this is executed if pushed same point")
+   :bolp       (message "this is called if pushed at bolp")
+   :eolp       (message "this is called if pushed at eolp")
+   :C-u&bolp   (message "this is called if pushed at bolp after pushed C-u")
+   :C-u&eolp   (message "this is called if pushed at eolp after pushed C-u")
+   :region     (message "this is called if pushed it when selecting region")
+   :region&C-u (message "this is called if pushed it after pushed C-u when selecting region"))
+
+;; C-u*N example
+;; You can utilize C-u's pushed times.
+;; For example:
+(mykie:global-set-key "C-0"
+   :default (message "default func")
+   :C-u     (message "C-u")
+   :C-u*2   (message "You pushed C-u 2 times aren't you?")
+   :C-u*3   (message "You pushed C-u 3 times aren't you?")
+   :C-u*4   (message "You pushed C-u 4 times aren't you?")
+   :region  query-replace-regexp)
+
+;; M-N example
+;; You can utilize M-[0-9] pushing times.
+
+(mykie:global-set-key "C-0"
+   :default (message "default func")
+   :C-u     (message "C-u")
+   :M-1     (message "You pushed M-1 aren't you?")
+   :M-2     (message "You pushed M-2 aren't you?")
+   :M-3     (message "You pushed M-3 aren't you?")
+   :M-12    (message "You might pushed M-1 and M-2 aren't you?")
+   :region  query-replace-regexp)
+
+;; As you may know, you can do commands
+;; [M-1 M-2 C-0], [M-1 2 C-0], or [C-u 1 2 C-0] to call :M-12's function.
+
+;; :email, :url example
+;; You can utilize :email and :url keyword.
+;; And you can use `mykie:current-thing` variable that store thing's
+;; variable.
+
+(mykie:global-set-key "C-0"
+   :C-u&url            (browse-url-firefox mykie:current-thing)
+   :email              (message mykie:current-thing)
+   :default            (message "default"))
+;; example ↓ try C-0 on below url or email address
+;; http://www.google.com
+;; example@email
+
+;; :clone example
+;; Below an example can use comment-dwim function even terminal Emacs by C-;
+;; key. (Because terminal Emacs ignore "C-" key.)
+(mykie:set-keys nil
+  "C-;"
+  :default doctor
+  :region  comment-dwim
+  :clone   ";")
+
+;; :prog example
+;; This is an example using [quickrun.el](https://github.com/syohex/emacs-quickrun).
+(mykie:set-keys nil
+  "M-q"
+  :default     tetris
+  :prog        quickrun
+  :C-u&prog    quickrun-with-arg
+  :region&prog quickrun-region)
+
+;; Local Variables:
+;; coding: utf-8
+;; mode: emacs-lisp
+;; End:
+
+;;; basic ends here
