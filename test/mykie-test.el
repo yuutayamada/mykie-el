@@ -109,6 +109,21 @@
   (cmds-do '(default C-u) global-map "C-9")
   (cmds-do '(default C-u) global-map "C-1"))
 
+(ert-deftest mykie-set-keys-short-hand ()
+  "`mykie:set-keys' should call function even user doesn't specify
+:default keyword."
+  (mykie:set-keys global-map
+    "C-e" (setq test-result 'default)
+    "H-m" (setq test-result 'default)
+    "S-a" (setq test-result 'default)
+    "A-c" (setq test-result 'default)
+    "M-s" (setq test-result 'default))
+  (cmds-do '(default) global-map "C-e")
+  (cmds-do '(default) global-map "H-m")
+  (cmds-do '(default) global-map "S-a")
+  (cmds-do '(default) global-map "A-c")
+  (cmds-do '(default) global-map "M-s"))
+
 ;; mykie:combined-command
 (ert-deftest mykie-combined-command ()
   (global-set-key (kbd "C-4")
@@ -145,3 +160,11 @@
                      (:C-u     (message "")
                                (setq test-result 'C-u)))))
   (cmds-do '(default C-u) global-map "C-3"))
+
+;; Local Variables:
+;; coding: utf-8
+;; mode: emacs-lisp
+;; no-byte-compile: t
+;; End:
+
+;;; mykie-test.el ends here

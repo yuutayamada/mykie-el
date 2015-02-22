@@ -3,21 +3,13 @@ before_install:
   - curl -fsSkL https://gist.github.com/rejeep/7736123/raw | sh
   - export PATH="/home/travis/.cask/bin:$PATH"
   - export PATH="/home/travis/.evm/bin:$PATH"
-  - evm install $EVM_EMACS --use
+  - evm install $EVM_EMACS --use --skip
   - cask
 env:
-  global:
-    - CURL=curl -fsSkL --retry 9 --retry-delay 9
-  matrix:
-    # - EVM_EMACS=emacs-23.4-bin
-    # - EVM_EMACS=emacs-24.1-bin
-    # - EVM_EMACS=emacs-24.2-bin
-    - EVM_EMACS=emacs-24.3-bin
-install:
-  - if ! test $EVM_EMACS = emacs-24.3-bin; then
-      $CURL https://raw.github.com/ohler/ert/fb3c278d/lisp/emacs-lisp/ert.el -o ert.el;
-      $CURL https://raw.github.com/emacsmirror/cl-lib/master/cl-lib.el -o cl-lib.el;
-    fi
+  # - EVM_EMACS=emacs-24.1-bin
+  # - EVM_EMACS=emacs-24.2-bin
+  - EVM_EMACS=emacs-24.3-bin
+  - EVM_EMACS=emacs-24.4-bin
 script:
   - emacs --version
   - make test
