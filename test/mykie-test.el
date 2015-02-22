@@ -160,3 +160,11 @@
                      (:C-u     (message "")
                                (setq test-result 'C-u)))))
   (cmds-do '(default C-u) global-map "C-3"))
+
+;; Local Variables:
+;; coding: utf-8
+;; mode: emacs-lisp
+;; no-byte-compile: t
+;; End:
+
+;;; mykie-test.el ends here
