@@ -358,7 +358,8 @@ The MODE is mode name's symbol such as 'emacs-lisp-mode."
   (equal this-command last-command))
 
 (defun mykie:region-p ()
-  (region-active-p))
+  (or (region-active-p)
+      (bound-and-true-p evil-visual-region-expanded)))
 
 (defun mykie:get-C-u-times ()
   "Return times that your pushed C-u's times. And you can use mykie:C-u-num
