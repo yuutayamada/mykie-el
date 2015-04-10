@@ -262,6 +262,7 @@ Otherwise nil.")
           (lambda ()
             (set (make-local-variable 'mykie:prog-mode-flag) t)))
 
+;;;###autoload
 (defmacro mykie:loop (&rest args)
   `(mykie:loop-core (quote ,args)))
 
@@ -284,6 +285,7 @@ Otherwise nil.")
              if func
              do (mykie:execute func))))
 
+;;;###autoload
 (defmacro mykie:do-while (&rest args)
   "Firstly do 1th function of ARGS and then do `mykie:loop' with ARGS."
   `(progn (mykie:execute (nth 1 (quote ,args)))
@@ -318,6 +320,7 @@ Example
     (run-hooks 'post-command-hook))
   (mykie:run-hook 'after))
 
+;;;###autoload
 (defun mykie:attach-mykie-func-to (&optional mode-symbol)
   "Attach mykie's functions to the MODE's same key function without :default.
 Use the MODE's function as :default function.
@@ -648,6 +651,7 @@ Otherwise return KW-AND-CONDITION's first element."
     (string (mykie:kbd key))
     (t (error "Invalid key"))))
 
+;;;###autoload
 (defmacro mykie:define-key (keymap key &rest args)
   "In KEYMAP, define key sequence KEY as `mykie' command with ARGS.
 In other words, `mykie' + `define-key'.
@@ -715,6 +719,7 @@ Example:
              else if (not (member i ignore))
              collect (nth i args))))
 
+;;;###autoload
 (defmacro mykie:global-set-key (key &rest args)
   "Give KEY a global binding as `mykie' command.
 In other words, `mykie' + `global-set-key'.
@@ -727,6 +732,7 @@ Example:
   `(mykie:define-key-core "global-map" global-map ,key (quote ,args)))
 (put 'mykie:global-set-key 'lisp-indent-function 1)
 
+;;;###autoload
 (defmacro mykie:define-key-with-self-key (key &rest args)
   "Set self-insert-key(KEY) with `mykie' command.
 This function register :default `self-insert-command' automatically to ARGS.
@@ -747,6 +753,7 @@ Example:
                                      `(:ignore-minor-modes ,it)))))
 (put 'mykie:define-key-with-self-key 'lisp-indent-function 1)
 
+;;;###autoload
 (defmacro mykie:set-keys (keymap-or-order &rest args)
   "Set keybinds as `mykie' command.
 Examples:
@@ -832,6 +839,7 @@ Examples:
             (2 (append '(:default) `(,props))))
         props))))
 
+;;;###autoload
 (defun mykie:parse-parenthesized-syntax (args)
   (cl-typecase (car args)
     (list (cl-loop for (keyword . function) in args
@@ -842,6 +850,7 @@ Examples:
                    finally return new-args))
     (symbol args)))
 
+;;;###autoload
 (defmacro mykie:define-prefix-key (parent-map prefix-key params &rest mykie-keys)
   "Make prefix key with MYKIE-KEYS(mykielized keybindings).
 
@@ -897,6 +906,7 @@ So you can register keybind like this:
   (ad-set-args 0 (mykie:parse-parenthesized-syntax (ad-get-args 0)))
   ad-do-it)
 
+;;;###autoload
 (defadvice mykie
     (around mykie:parse-parenthesized-syntax activate)
   "Parse args to convert parenthesized-syntax if it was needed."
