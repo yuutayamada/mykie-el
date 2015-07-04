@@ -916,6 +916,12 @@ So you can register keybind like this:
 (when mykie:use-major-mode-key-override
   (mykie:initialize))
 
+;; work around that magit doesn't bind mykie's self-insert keys.
+(with-eval-after-load 'magit
+  (cl-loop for key in mykie:self-insert-keys
+           unless (member key '("?" "-" "="))
+           do (define-key (bound-and-true-p magit-popup-mode-map) key 'magit-invoke-popup-action)))
+
 (provide 'mykie)
 
 ;; Local Variables:
