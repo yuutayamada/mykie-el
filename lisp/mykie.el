@@ -916,11 +916,16 @@ So you can register keybind like this:
 (when mykie:use-major-mode-key-override
   (mykie:initialize))
 
+(defun mykie:setup-magit-popup-mode-keybind ()
+  (mykie:aif (bound-and-true-p magit-popup-mode-map)
+      (cl-loop with map = it
+               for key in mykie:self-insert-keys
+               unless (member key '("?" "-" "="))
+               do (define-key map key 'magit-invoke-popup-action))))
+
 ;; work around that magit doesn't bind mykie's self-insert keys.
-(with-eval-after-load 'magit
-  (cl-loop for key in mykie:self-insert-keys
-           unless (member key '("?" "-" "="))
-           do (define-key (bound-and-true-p magit-popup-mode-map) key 'magit-invoke-popup-action)))
+;; TODO: suppress "Warning: Eager macro-expansion skipped due to cycle"
+(with-eval-after-load 'magit (mykie:setup-magit-popup-mode-keybind))
 
 (provide 'mykie)
 
