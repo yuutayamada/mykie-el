@@ -925,7 +925,7 @@ So you can register keybind like this:
 
 ;; work around that magit doesn't bind mykie's self-insert keys.
 ;; TODO: suppress "Warning: Eager macro-expansion skipped due to cycle"
-(with-eval-after-load 'magit (mykie:setup-magit-popup-mode-keybind))
+(eval-after-load 'magit '(mykie:setup-magit-popup-mode-keybind))
 
 (provide 'mykie)
 
