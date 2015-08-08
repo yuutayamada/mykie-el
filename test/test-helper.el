@@ -57,7 +57,7 @@
       ((file  C-u&file)  (insert "./"))
       (readonly (toggle-read-only t))
       (comment  (emacs-lisp-mode)
-                (insert "\"comment\"")
+                (insert ";; Comment")
                 (backward-char 4))
       ((C-u&bobp bobp) (goto-char (point-min)))
       ((C-u&eobp eobp) (call-interactively 'end-of-buffer))
