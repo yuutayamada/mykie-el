@@ -89,7 +89,7 @@ whether current-prefix-arg is non-nil or not before check this variable.")
     (:err         . (mykie:error-occur-p))
     ("^:.+-mode$" . (mykie:get-major-mode-state))
     (:prog        . mykie:prog-mode-flag)
-    (:comment     . (mykie:get-comment/string-state))
+    (:comment     . (mykie:get-comment-state))
     (:ido         . (ido-active))
     (:email       . (mykie:thing-exist-p 'email))
     (:url         . (mykie:thing-exist-p 'url))
@@ -385,11 +385,9 @@ If return value is non-nil, then save the value to `mykie:current-thing'."
   (mykie:aif (thing-at-point thing)
       (setq mykie:current-thing it)))
 
-(defun mykie:get-comment/string-state ()
-  "Return :comment if current point is comment or string face."
-  (when (nth 8 (save-excursion (syntax-ppss
-                                (if (bobp) (point) (1- (point))))))
-    :comment))
+(defun mykie:get-comment-state ()
+  "Return :comment if current point is comment."
+  (when (nth 4 (syntax-ppss)) :comment))
 
 (defun mykie:file-at-point-p ()
   "Return non-nil if current point is file related path.
@@ -533,7 +531,7 @@ You can set below keyword to ARGS by default:
  :region&err        | Call this if you satisfied :region & :err
  :minibuff          | Call this if current point is in minibuffer
  :readonly          | Call this if current buffer is read-only
- :comment           | Call this if current point is string or comment face
+ :comment           | Call this if current point is comment
 
 *Flags*
  :clone - Clone mykie's functions to other KEY.

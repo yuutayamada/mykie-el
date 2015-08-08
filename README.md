@@ -100,7 +100,7 @@ Note: below keyword can specify function only. See Available Forms too.
 | :region&err        | Call this if you satisfied :region & :err
 | :minibuff          | Call this if current point is in minibuffer
 | :readonly          | Call this if current buffer is read-only
-| :comment           | Call this if current point is string or comment face
+| :comment           | Call this if current point is comment
 
 There are other convenience keywords
 Below keywords can't specify function. Instead specify other thing.
