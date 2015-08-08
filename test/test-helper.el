@@ -18,7 +18,7 @@
     (when test-region-state (set-mark (point)))
     (call-interactively (lookup-key map (mykie:kbd key)))
     (case expect
-      (readonly (toggle-read-only 0))
+      (readonly (read-only-mode 0)) ; <- This is introduced from emacs 24.3
       ((url C-u&url)     (should (equal test-url  mykie:current-thing)))
       ((email C-u&email) (should (equal test-mail mykie:current-thing)))
       ((file C-u&file)   (should (equal "./" mykie:current-file))))
@@ -55,7 +55,7 @@
       ((url   C-u&url)   (insert test-url))
       ((email C-u&email) (insert test-mail))
       ((file  C-u&file)  (insert "./"))
-      (readonly (toggle-read-only t))
+      (readonly (read-only-mode t))
       (comment  (emacs-lisp-mode)
                 (insert ";; Comment")
                 (backward-char 4))
