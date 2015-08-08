@@ -20,7 +20,7 @@
 ;;; Commentary:
 
 ;;; Code:
-(eval-when-compile (require 'cl))
+(require 'cl-lib)
 (require 'mykie)
 (require 'helm)
 
@@ -31,7 +31,7 @@
 
 (defun mykie:set-helm-mykie-keyword ()
   (setq helm-mykie-keywords-source
-        (loop with base = `((candidates-in-buffer)
+        (cl-loop with base = `((candidates-in-buffer)
                             (action . ,helm-mykie-keywords-action))
               with get-default = (lambda (cond-sym)
                                    (if (equal 'mykie:normal-conditions cond-sym)
@@ -41,8 +41,8 @@
                                        cond-sym
                                        mykie:default-condition-keyword-alist))))
               with make = (lambda (cond-sym)
-                            (loop with format = (lambda (kw)
-                                                  (typecase kw
+                            (cl-loop with format = (lambda (kw)
+                                                  (cl-typecase kw
                                                     (symbol (symbol-name kw))
                                                     (string kw)))
                                   with default-kw = (funcall get-default cond-sym)
@@ -57,7 +57,7 @@
                             (helm-init-candidates-in-buffer
                              ,cond
                              (with-temp-buffer
-                               (loop for kw in (quote ,keywords)
+                               (cl-loop for kw in (quote ,keywords)
                                      do (insert (format "%s\n" kw)))
                                (buffer-string))))
               collect (append base name
